@@ -56,14 +56,14 @@
             "componentType" : 5126,
             "count" : 4,
             "max" : [
-                0.5,
-                -0.07999999821186066,
-                0.5
+                0.4375,
+                -0.0794999971985817,
+                0.4375
             ],
             "min" : [
-                -0.5,
-                -0.07999999821186066,
-                -0.5
+                -0.4375,
+                -0.0794999971985817,
+                -0.4375
             ],
             "type" : "VEC3"
         },
@@ -111,7 +111,7 @@
     "buffers" : [
         {
             "byteLength" : 140,
-            "uri" : "data:application/octet-stream;base64,AAAAvwrXo70AAAA/AAAAPwrXo70AAAC/AAAAvwrXo70AAAC/AAAAPwrXo70AAAA/AAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAPwAAQD8AACA/AAAgPwAAAD8AACA/AAAgPwAAQD8AAAEAAgAAAAMAAQA="
+            "uri" : "data:application/octet-stream;base64,AADgvuXQor0AAOA+AADgPuXQor0AAOC+AADgvuXQor0AAOC+AADgPuXQor0AAOA+AAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAPwAAQD8AACA/AAAgPwAAAD8AACA/AAAgPwAAQD8AAAEAAgAAAAMAAQA="
         }
     ]
 }

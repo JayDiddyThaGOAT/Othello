@@ -1,5 +1,8 @@
 extends Spatial
 
+export var flipDuration = 0.3
+export var flipHeight = 2
+
 var stoneInstance = preload("res://Scenes/Stone.tscn")
 var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
 
@@ -9,7 +12,10 @@ const SIZE = 8;
 var currentPlayer = "Black"
 var currentLegalMoves = []
 
-func place_stone_at(sideUp : String, row : int, col : int, board):
+var flippedStones = []
+var finishedTurn = false
+
+func place_stone_at(row : int, col : int, sideUp : String, board):
 	var stone = board[row][col]
 	stone.set_translation(Vector3(col - 3.5, 0, row - 3.5))
 	stone.sideUp = sideUp
@@ -17,26 +23,24 @@ func place_stone_at(sideUp : String, row : int, col : int, board):
 		stone.set_rotation_degrees(Vector3(180, 0, 0))
 	
 	add_child(stone)
+	
+	return stone
 
 func _ready():
-	for col in range(SIZE):
+	for row in range(SIZE):
 		gameBoard.append([])
-		for row in range(SIZE):
+		for col in range(SIZE):
 			var stone = stoneInstance.instance()
 			stone.row = row
 			stone.col = col
-			gameBoard[col].append(stone)
+			gameBoard[row].append(stone)
 	
-	place_stone_at("Black", 3, 3, gameBoard)
-	place_stone_at("Black", 4, 4, gameBoard)
-	place_stone_at("White", 3, 4, gameBoard)
-	place_stone_at("White", 4, 3, gameBoard)
+	place_stone_at(3, 3, "White", gameBoard)
+	place_stone_at(4, 4, "White", gameBoard)
+	place_stone_at(3, 4, "Black", gameBoard)
+	place_stone_at(4, 3, "Black", gameBoard)
 	
-	currentLegalMoves = legal_moves(currentPlayer, gameBoard)
-	for move in currentLegalMoves:
-		var legalMove = legalMoveInstance.instance()
-		legalMove.set_translation(Vector3(move.col - 3.5, 0.1, move.row - 3.5))
-		add_child(legalMove)
+	go_to_turn(currentPlayer)
 
 func neighbors_of(stone : MeshInstance, board):
 	var neighbors = {}
@@ -66,43 +70,111 @@ func neighbors_of(stone : MeshInstance, board):
 	
 	return neighbors;
 
-func check_directions(direction_one : String, direction_two : String, player : String, stones, legalMoves):
-	if not stones.has(direction_one) or not stones.has(direction_two):
+func enemy_of(player : String):
+	match player:
+		"Black": return "White"
+		"White": return "Black"
+
+func search_for_move(direction : String, rootStone : MeshInstance, var board):
+	var surroundingStones = neighbors_of(rootStone, board)
+	if not surroundingStones.has(direction):
 		return
 	
-	if legalMoves.has(stones[direction_one]) or legalMoves.has(stones[direction_two]):
-		return
+	var enemy = ""
+	match rootStone.sideUp:
+		"Black": enemy = "White"
+		"White": enemy = "Black"
 	
-	if stones[direction_one].sideUp == player:
-		if stones[direction_two].sideUp == "":
-			legalMoves.append(stones[direction_two])
-			return
-	
-	if stones[direction_two].sideUp == player:
-		if stones[direction_one].sideUp == "":
-			legalMoves.append(stones[direction_one])
+	var surroundingStone = surroundingStones[direction]
+	if surroundingStone.sideUp == enemy:
+		var nextStones = neighbors_of(surroundingStone, board)
+		if not nextStones.has(direction):
 			return
 		
-
-func legal_moves(sideUp : String, board):
-	var enemy = ""
-	if sideUp == "Black":
-		enemy = "White"
-	elif sideUp == "White":
-		enemy = "Black"
+		while nextStones[direction].sideUp == enemy:
+			var otherSurroundingStones = neighbors_of(nextStones[direction], board)
+			if not otherSurroundingStones.has(direction): return
+			nextStones[direction] = otherSurroundingStones[direction]
+		
+		if nextStones[direction].sideUp == "":
+			var oppositeDirection = ""
+			match direction:
+				"NORTH": oppositeDirection = "SOUTH"
+				"SOUTH": oppositeDirection = "NORTH"
+				"WEST": oppositeDirection = "EAST"
+				"EAST": oppositeDirection = "WEST"
+				"NORTHWEST": oppositeDirection = "SOUTHEAST"
+				"SOUTHEAST": oppositeDirection = "NORTHWEST"
+				"NORTHEAST": oppositeDirection = "SOUTHWEST"
+				"SOUTHWEST": oppositeDirection = "NORTHEAST"
+			
+			nextStones[direction].flankDirections.append(oppositeDirection)
+			return nextStones[direction]
 	
-	var enemyStones = []
-	for j in range(SIZE):
-		for i in range(SIZE):
-			if board[i][j].sideUp == enemy:
-				enemyStones.append(board[i][j])
-	
+func get_legal_moves(player : String, board):
+	var stones = []
+	for i in range(SIZE):
+		for j in range(SIZE):
+			if board[i][j].sideUp == player:
+				stones.append(board[i][j])
+		
+	var directions = ["NORTH", "SOUTH", "WEST", "EAST", "NORTHWEST", "NORTHEAST", "SOUTHWEST", "SOUTHEAST"]
 	var legalMoves = []
-	for stone in enemyStones:
-		var surroundingStones = neighbors_of(stone, board)
-		check_directions("NORTH", "SOUTH", sideUp, surroundingStones, legalMoves)
-		check_directions("WEST", "EAST", sideUp, surroundingStones, legalMoves)
-		check_directions("NORTHWEST", "SOUTHEAST", sideUp, surroundingStones, legalMoves)
-		check_directions("NORTHEAST", "SOUTHWEST", sideUp, surroundingStones, legalMoves)
-	
+	for stone in stones:
+		for direction in directions:
+			var search = search_for_move(direction, stone, board)
+			if search != null and not legalMoves.has(search): legalMoves.append(search)
+		
 	return legalMoves
+
+func show_legal_moves(moves):
+	for move in moves:
+		var legalMove = legalMoveInstance.instance()
+		legalMove.row = move.row
+		legalMove.col = move.col
+		legalMove.set_translation(Vector3(legalMove.col - 3.5, 0, legalMove.row - 3.5))
+		
+		add_child(legalMove)
+
+func go_to_turn(player : String):
+	flippedStones.clear()
+	
+	currentPlayer = player
+	currentLegalMoves = get_legal_moves(currentPlayer, gameBoard)
+	show_legal_moves(currentLegalMoves)
+
+func flip_stones_by(startStone : MeshInstance, player : String, board):
+	var enemy = ""
+	match player:
+		"Black": enemy = "White"
+		"White": enemy = "Black"
+	
+	place_stone_at(startStone.row, startStone.col, player, board)
+	
+	while len(startStone.flankDirections) > 0:
+		var currentDirection = startStone.flankDirections.pop_front()
+		var	nextStone = neighbors_of(startStone, board)[currentDirection]
+		while nextStone.sideUp == enemy:
+			nextStone.flip()
+			
+			var surroundingStones = neighbors_of(nextStone, board)
+			if not surroundingStones.has(currentDirection):
+				break
+			
+			nextStone = neighbors_of(nextStone, board)[currentDirection]
+
+func count(player : String, board):
+	var total = 0
+	for i in range(SIZE):
+		for j in range(SIZE):
+			if board[i][j].sideUp == player:
+				total += 1
+	
+	return total
+
+func _process(delta):
+	if len(flippedStones) > 0:
+		for stone in flippedStones:
+			if not stone.flipped:
+				return
+		go_to_turn(enemy_of(currentPlayer))

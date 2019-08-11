@@ -5,13 +5,12 @@
 [node name="GamePlay" type="Spatial"]
 
 [node name="Board" parent="." instance=ExtResource( 1 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 
 [node name="Camera" type="Camera" parent="."]
-transform = Transform( 1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 7, 5 )
-keep_aspect = 0
+editor/display_folded = true
+transform = Transform( 1, 0, 0, 0, 0.258819, 0.965925, 0, -0.965925, 0.258819, 0, 5, 2.25 )
 current = true
-fov = 88.0
+fov = 125.5
 
-[node name="DirectionalLight" type="DirectionalLight" parent="."]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0 )
+[node name="DirectionalLight" type="DirectionalLight" parent="Camera"]
+light_specular = 1.0

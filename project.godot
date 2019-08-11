@@ -21,18 +21,23 @@ config/icon="res://icon.png"
 
 [display]
 
-window/size/width=2960
-window/size/height=1440
+window/size/width=1440
+window/size/height=2960
 window/size/resizable=false
-window/size/test_width=740
-window/size/test_height=360
+window/size/test_width=360
+window/size/test_height=740
+window/handheld/orientation="portrait"
 
 [rendering]
 
 quality/driver/driver_name="GLES2"
 vram_compression/import_etc=true
 vram_compression/import_etc2=false
+quality/reflections/texture_array_reflections.mobile=true
+quality/reflections/high_quality_ggx.mobile=true
 quality/shading/force_vertex_shading.mobile=false
 quality/shading/force_lambert_over_burley.mobile=false
 quality/shading/force_blinn_over_ggx.mobile=false
+quality/depth_prepass/enable=false
+quality/depth/hdr=false
 environment/default_environment="res://default_env.tres"
