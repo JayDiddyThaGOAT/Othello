@@ -1,27 +1,28 @@
 extends Spatial
 
+# warning-ignore:unused_class_variable
 export var flipDuration = 0.3
+# warning-ignore:unused_class_variable
 export var flipHeight = 2
 
 var stoneInstance = preload("res://Scenes/Stone.tscn")
 var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
+
+onready var blackScore = get_parent().get_node("Score HUD/Black Score/TotalContainer/Total")
+onready var whiteScore = get_parent().get_node("Score HUD/White Score/TotalContainer/Total")
 
 var gameBoard = []
 const SIZE = 8;
 
 var currentPlayer = "Black"
 var currentLegalMoves = []
-
-var flippedStones = []
-var finishedTurn = false
+var currentFlippedStones = []
 
 func place_stone_at(row : int, col : int, sideUp : String, board):
 	var stone = board[row][col]
 	stone.set_translation(Vector3(col - 3.5, 0, row - 3.5))
 	stone.sideUp = sideUp
-	if sideUp == "White":
-		stone.set_rotation_degrees(Vector3(180, 0, 0))
-	
+	if sideUp == "White": stone.set_rotation_degrees(Vector3(180, 0, 0))
 	add_child(stone)
 	
 	return stone
@@ -123,7 +124,8 @@ func get_legal_moves(player : String, board):
 	for stone in stones:
 		for direction in directions:
 			var search = search_for_move(direction, stone, board)
-			if search != null and not legalMoves.has(search): legalMoves.append(search)
+			if search != null and not legalMoves.has(search):
+				legalMoves.append(search)
 		
 	return legalMoves
 
@@ -137,31 +139,14 @@ func show_legal_moves(moves):
 		add_child(legalMove)
 
 func go_to_turn(player : String):
-	flippedStones.clear()
+	currentFlippedStones.clear()
+	
+	blackScore.text = String(count("Black", gameBoard))
+	whiteScore.text = String(count("White", gameBoard))
 	
 	currentPlayer = player
 	currentLegalMoves = get_legal_moves(currentPlayer, gameBoard)
 	show_legal_moves(currentLegalMoves)
-
-func flip_stones_by(startStone : MeshInstance, player : String, board):
-	var enemy = ""
-	match player:
-		"Black": enemy = "White"
-		"White": enemy = "Black"
-	
-	place_stone_at(startStone.row, startStone.col, player, board)
-	
-	while len(startStone.flankDirections) > 0:
-		var currentDirection = startStone.flankDirections.pop_front()
-		var	nextStone = neighbors_of(startStone, board)[currentDirection]
-		while nextStone.sideUp == enemy:
-			nextStone.flip()
-			
-			var surroundingStones = neighbors_of(nextStone, board)
-			if not surroundingStones.has(currentDirection):
-				break
-			
-			nextStone = neighbors_of(nextStone, board)[currentDirection]
 
 func count(player : String, board):
 	var total = 0
@@ -172,9 +157,10 @@ func count(player : String, board):
 	
 	return total
 
+# warning-ignore:unused_argument
 func _process(delta):
-	if len(flippedStones) > 0:
-		for stone in flippedStones:
+	if len(currentFlippedStones) > 0:
+		for stone in currentFlippedStones:
 			if not stone.flipped:
 				return
 		go_to_turn(enemy_of(currentPlayer))

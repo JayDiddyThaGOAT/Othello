@@ -17,7 +17,8 @@ _global_script_class_icons={
 
 config/name="Othello"
 run/main_scene="res://Scenes/GamePlay.tscn"
-config/icon="res://icon.png"
+boot_splash/fullsize=false
+config/icon="res://Sprites/icon.png"
 
 [display]
 
@@ -27,10 +28,13 @@ window/size/resizable=false
 window/size/test_width=360
 window/size/test_height=740
 window/handheld/orientation="portrait"
+window/stretch/mode="2d"
+window/stretch/aspect="keep_height"
 
 [rendering]
 
 quality/driver/driver_name="GLES2"
+quality/2d/use_pixel_snap=true
 vram_compression/import_etc=true
 vram_compression/import_etc2=false
 quality/reflections/texture_array_reflections.mobile=true

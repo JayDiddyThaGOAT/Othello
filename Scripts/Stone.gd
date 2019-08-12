@@ -10,6 +10,7 @@ var flipHeight : float
 var flipDuration : float
 var flipped = false
 
+# warning-ignore:unused_argument
 var flankDirections = []
 
 func to_string():
@@ -20,7 +21,6 @@ func equals(otherStone : MeshInstance):
 
 func flip():
 	flipped = false
-	get_parent().flippedStones.append(self)
 	var startRotation = int(get_rotation_degrees().x)
 	
 	flipDuration = get_parent().flipDuration
