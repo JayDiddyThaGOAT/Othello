@@ -3,6 +3,6 @@
 [ext_resource path="res://Fonts/Fredericka_the_Great/FrederickatheGreat-Regular.ttf" type="DynamicFontData" id=1]
 
 [resource]
-size = 225
+size = 200
 outline_color = Color( 0, 0, 0, 1 )
 font_data = ExtResource( 1 )

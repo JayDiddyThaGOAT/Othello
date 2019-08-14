@@ -8,8 +8,8 @@ export var flipHeight = 2
 var stoneInstance = preload("res://Scenes/Stone.tscn")
 var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
 
-onready var blackScore = get_parent().get_node("Score HUD/Black Score/TotalContainer/Total")
-onready var whiteScore = get_parent().get_node("Score HUD/White Score/TotalContainer/Total")
+onready var blackScore = get_parent().get_node("Scores/Black Score/Number")
+onready var whiteScore = get_parent().get_node("Scores/White Score/Number")
 
 var gameBoard = []
 const SIZE = 8;
