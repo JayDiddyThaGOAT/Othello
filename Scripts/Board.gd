@@ -1,5 +1,8 @@
 extends Spatial
 
+export var blackAI = false
+export var whiteAI = true
+
 # warning-ignore:unused_class_variable
 export var flipDuration = 0.3
 # warning-ignore:unused_class_variable
@@ -7,10 +10,11 @@ export var flipHeight = 2
 
 var stoneInstance = preload("res://Scenes/Stone.tscn")
 var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
-var stoneLightInstance = preload("res://Scenes/StoneLight.tscn")
 
 var spaceTexture = preload("res://Sprites/Space.png")
 var darkSpaceTexture = preload("res://Sprites/DarkSpace.png")
+
+onready var aiTimer = get_parent().get_node("AI")
 
 onready var turnSummary = get_parent().get_node("Turn Summary")
 
@@ -22,9 +26,15 @@ const SIZE = 8;
 
 var currentPlayer = "Black"
 var currentLegalMoves = []
-var currentFlippedStones = []
+var selectedStone : MeshInstance
 
 func place_stone_at(row : int, col : int, sideUp : String, board):
+	if currentLegalMoves.size() > 0:
+		currentLegalMoves.clear()
+		for legalMove in get_children():
+			if legalMove.get_class() == "Area":
+				legalMove.queue_free()
+	
 	var stone = board[row][col]
 	stone.set_translation(Vector3(col - 3.5, 0, row - 3.5))
 	stone.sideUp = sideUp
@@ -42,12 +52,10 @@ func _ready():
 			stone.col = col
 			gameBoard[row].append(stone)
 	
-	var firstStones = [place_stone_at(3, 3, "White", gameBoard), place_stone_at(4, 4, "White", gameBoard), place_stone_at(3, 4, "Black", gameBoard), place_stone_at(4, 3, "Black", gameBoard)] 
-	for stone in firstStones:
-		var stoneLight = stoneLightInstance.instance()
-		stoneLight.set_translation(Vector3(stone.get_translation().x, stoneLight.omni_range / 2, stone.get_translation().z))
-		stone.light = stoneLight
-		add_child(stoneLight)
+	place_stone_at(3, 3, "White", gameBoard)
+	place_stone_at(4, 4, "White", gameBoard)
+	place_stone_at(3, 4, "Black", gameBoard)
+	place_stone_at(4, 3, "Black", gameBoard)
 	
 	go_to_turn(currentPlayer)
 
@@ -129,7 +137,7 @@ func get_legal_moves(player : String, board):
 			var search = search_for_move(direction, stone, board)
 			if search != null and not legalMoves.has(search):
 				legalMoves.append(search)
-		
+	
 	return legalMoves
 
 func show_legal_moves(moves):
@@ -138,6 +146,11 @@ func show_legal_moves(moves):
 		legalMove.row = move.row
 		legalMove.col = move.col
 		legalMove.set_translation(Vector3(legalMove.col - 3.5, 0, legalMove.row - 3.5))
+		
+		if currentPlayer == "Black":
+			legalMove.selectable = not blackAI
+		elif currentPlayer == "White":
+			legalMove.selectable = not whiteAI
 		
 		add_child(legalMove)
 
@@ -150,7 +163,7 @@ func get_winner(board):
 	return null
 
 func go_to_turn(player : String):
-	currentFlippedStones.clear()
+	selectedStone = null
 	
 	currentPlayer = player
 	currentLegalMoves = get_legal_moves(currentPlayer, gameBoard)
@@ -184,15 +197,17 @@ func go_to_turn(player : String):
 		enemyScore = blackScore
 		turnSummary.add_color_override("font_color", Color.white)
 	
-	
 		
 	playerScore.get_node("Space").texture = darkSpaceTexture
 	enemyScore.get_node("Space").texture = spaceTexture
 	
 	blackScore.get_node("Number").text = String(count("Black", gameBoard))
 	whiteScore.get_node("Number").text = String(count("White", gameBoard))
-	
+
 	show_legal_moves(currentLegalMoves)
+	
+	if blackAI and currentPlayer == "Black" or whiteAI and currentPlayer == "White":
+		aiTimer.start()
 
 func count(player : String, board):
 	var total = 0
@@ -205,8 +220,15 @@ func count(player : String, board):
 
 # warning-ignore:unused_argument
 func _process(delta):
-	if len(currentFlippedStones) > 0:
-		for stone in currentFlippedStones:
+	if selectedStone != null:
+		for stone in selectedStone.flipStones:
 			if not stone.flipped:
 				return
+		
 		go_to_turn(enemy_of(currentPlayer))
+
+func apply_ai_move():
+	var selectedMove = currentLegalMoves[0]
+	selectedStone = place_stone_at(selectedMove.row, selectedMove.col, currentPlayer, gameBoard)
+	for stone in selectedStone.flipStones:
+		stone.flip()

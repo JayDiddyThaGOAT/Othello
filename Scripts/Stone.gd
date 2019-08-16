@@ -8,6 +8,7 @@ var sideUp: String
 
 var flipHeight : float
 var flipDuration : float
+var flipStones = []
 var flipped = false
 
 var light : Light
