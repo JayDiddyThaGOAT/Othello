@@ -7,9 +7,15 @@ export var flipHeight = 2
 
 var stoneInstance = preload("res://Scenes/Stone.tscn")
 var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
+var stoneLightInstance = preload("res://Scenes/StoneLight.tscn")
 
-onready var blackScore = get_parent().get_node("Scores/Black Score/Number")
-onready var whiteScore = get_parent().get_node("Scores/White Score/Number")
+var spaceTexture = preload("res://Sprites/Space.png")
+var darkSpaceTexture = preload("res://Sprites/DarkSpace.png")
+
+onready var turnSummary = get_parent().get_node("Turn Summary")
+
+onready var blackScore = get_parent().get_node("Scores/Black Disc/Score")
+onready var whiteScore = get_parent().get_node("Scores/White Disc/Score")
 
 var gameBoard = []
 const SIZE = 8;
@@ -36,10 +42,12 @@ func _ready():
 			stone.col = col
 			gameBoard[row].append(stone)
 	
-	place_stone_at(3, 3, "White", gameBoard)
-	place_stone_at(4, 4, "White", gameBoard)
-	place_stone_at(3, 4, "Black", gameBoard)
-	place_stone_at(4, 3, "Black", gameBoard)
+	var firstStones = [place_stone_at(3, 3, "White", gameBoard), place_stone_at(4, 4, "White", gameBoard), place_stone_at(3, 4, "Black", gameBoard), place_stone_at(4, 3, "Black", gameBoard)] 
+	for stone in firstStones:
+		var stoneLight = stoneLightInstance.instance()
+		stoneLight.set_translation(Vector3(stone.get_translation().x, stoneLight.omni_range / 2, stone.get_translation().z))
+		stone.light = stoneLight
+		add_child(stoneLight)
 	
 	go_to_turn(currentPlayer)
 
@@ -81,18 +89,13 @@ func search_for_move(direction : String, rootStone : MeshInstance, var board):
 	if not surroundingStones.has(direction):
 		return
 	
-	var enemy = ""
-	match rootStone.sideUp:
-		"Black": enemy = "White"
-		"White": enemy = "Black"
-	
 	var surroundingStone = surroundingStones[direction]
-	if surroundingStone.sideUp == enemy:
+	if surroundingStone.sideUp == enemy_of(rootStone.sideUp):
 		var nextStones = neighbors_of(surroundingStone, board)
 		if not nextStones.has(direction):
 			return
 		
-		while nextStones[direction].sideUp == enemy:
+		while nextStones[direction].sideUp == enemy_of(rootStone.sideUp):
 			var otherSurroundingStones = neighbors_of(nextStones[direction], board)
 			if not otherSurroundingStones.has(direction): return
 			nextStones[direction] = otherSurroundingStones[direction]
@@ -138,14 +141,57 @@ func show_legal_moves(moves):
 		
 		add_child(legalMove)
 
+func get_winner(board):
+	if count("Black", board) > count("White", board):
+		return "Black"
+	elif count("Black", board) < count("White", board):
+		return "White"
+	
+	return null
+
 func go_to_turn(player : String):
 	currentFlippedStones.clear()
 	
-	blackScore.text = String(count("Black", gameBoard))
-	whiteScore.text = String(count("White", gameBoard))
-	
 	currentPlayer = player
 	currentLegalMoves = get_legal_moves(currentPlayer, gameBoard)
+	var repeatedTurn = false
+	if currentLegalMoves.size() <= 0:
+		var enemyLegalMoves = get_legal_moves(enemy_of(currentPlayer), gameBoard)
+		if enemyLegalMoves.size() <= 0:
+			var winner = get_winner(gameBoard)
+			turnSummary.text = winner.to_upper() + " WON"
+			match winner:
+				"Black": turnSummary.add_color_override("font_color", Color.black)
+				"White": turnSummary.add_color_override("font_color", Color.white)
+			return
+		else:
+			repeatedTurn = true
+			currentPlayer = enemy_of(currentPlayer)
+			currentLegalMoves = enemyLegalMoves
+			
+			turnSummary.text = currentPlayer.to_upper() + "'S TURN\nAGAIN"
+	else:
+		turnSummary.text = currentPlayer.to_upper() + "'S TURN"
+	
+	var playerScore = null
+	var enemyScore = null
+	if currentPlayer == "Black":
+		playerScore = blackScore
+		enemyScore = whiteScore
+		turnSummary.add_color_override("font_color", Color.black)
+	elif currentPlayer == "White":
+		playerScore = whiteScore
+		enemyScore = blackScore
+		turnSummary.add_color_override("font_color", Color.white)
+	
+	
+		
+	playerScore.get_node("Space").texture = darkSpaceTexture
+	enemyScore.get_node("Space").texture = spaceTexture
+	
+	blackScore.get_node("Number").text = String(count("Black", gameBoard))
+	whiteScore.get_node("Number").text = String(count("White", gameBoard))
+	
 	show_legal_moves(currentLegalMoves)
 
 func count(player : String, board):

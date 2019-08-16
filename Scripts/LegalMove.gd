@@ -40,7 +40,12 @@ func apply_move(camera, event, click_position, click_normal, shape_idx):
 			if legalMove.get_class() == "Area":
 				legalMove.queue_free()
 		
-		game.place_stone_at(row, col, game.currentPlayer, gameBoard)
+		var selectedStone = game.place_stone_at(row, col, game.currentPlayer, gameBoard)
+		var stoneLight = game.stoneLightInstance.instance()
+		stoneLight.set_translation(Vector3(selectedStone.get_translation().x, stoneLight.omni_range / 2, selectedStone.get_translation().z))
+		selectedStone.light = stoneLight
+		get_parent().add_child(stoneLight)
+		
 		game.currentFlippedStones = flipStones
 		for stone in flipStones:
 			stone.flip()

@@ -10,6 +10,8 @@ var flipHeight : float
 var flipDuration : float
 var flipped = false
 
+var light : Light
+
 # warning-ignore:unused_argument
 var flankDirections = []
 
@@ -26,8 +28,8 @@ func flip():
 	flipDuration = get_parent().flipDuration
 	flipHeight = get_parent().flipHeight
 	
-	tween.interpolate_property(self, "translation:y", 0, flipHeight, flipDuration / 2, Tween.TRANS_LINEAR, Tween.EASE_OUT)
-	tween.interpolate_property(self, "rotation_degrees:x", startRotation, startRotation - 90, flipDuration / 2, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+	tween.interpolate_property(self, "translation:y", 0, flipHeight, flipDuration / 2, Tween.TRANS_LINEAR, Tween.EASE_IN)
+	tween.interpolate_property(self, "rotation_degrees:x", startRotation, startRotation - 90, flipDuration / 2, Tween.TRANS_LINEAR, Tween.EASE_IN)
 	tween.start()
 	
 	yield(tween, "tween_completed")
