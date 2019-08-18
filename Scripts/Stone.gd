@@ -29,8 +29,8 @@ func flip():
 	flipDuration = get_parent().flipDuration
 	flipHeight = get_parent().flipHeight
 	
-	tween.interpolate_property(self, "translation:y", 0, flipHeight, flipDuration / 2, Tween.TRANS_LINEAR, Tween.EASE_IN)
-	tween.interpolate_property(self, "rotation_degrees:x", startRotation, startRotation - 90, flipDuration / 2, Tween.TRANS_LINEAR, Tween.EASE_IN)
+	tween.interpolate_property(self, "translation:y", 0, flipHeight, flipDuration / 2, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+	tween.interpolate_property(self, "rotation_degrees:x", startRotation, startRotation - 90, flipDuration / 2, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 	tween.start()
 	
 	yield(tween, "tween_completed")
@@ -48,4 +48,5 @@ func finish_flip():
 	
 	if abs(int(get_rotation_degrees().x)) >= 360:
 		set_rotation_degrees(Vector3(abs(int(get_rotation_degrees().x)) - 360, 0, 0))
+	
 	flipped = true
