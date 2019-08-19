@@ -3,5 +3,6 @@
 [ext_resource path="res://Fonts/Fredericka_the_Great/FrederickatheGreat-Regular.ttf" type="DynamicFontData" id=1]
 
 [resource]
-size = 105
+size = 80
+extra_spacing_space = 10
 font_data = ExtResource( 1 )

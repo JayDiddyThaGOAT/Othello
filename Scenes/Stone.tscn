@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://Models/Stone/stoneWhite.material" type="Material" id=1]
-[ext_resource path="res://Models/Stone/stoneBlack.material" type="Material" id=2]
+[ext_resource path="res://Models/Stone/stoneLight.material" type="Material" id=1]
+[ext_resource path="res://Models/Stone/stoneDark.material" type="Material" id=2]
 [ext_resource path="res://Scripts/Stone.gd" type="Script" id=3]
 
 [sub_resource type="ArrayMesh" id=1]
@@ -36,6 +36,8 @@ mesh = SubResource( 1 )
 material/0 = null
 material/1 = null
 script = ExtResource( 3 )
+flipHeight = 2.0
+flipDuration = 0.25
 
 [node name="Tween" type="Tween" parent="."]
 [connection signal="tween_all_completed" from="Tween" to="." method="finish_flip"]

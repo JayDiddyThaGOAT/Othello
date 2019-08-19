@@ -1,107 +1,81 @@
-extends Spatial
+extends MeshInstance
 
-const PositiveInfinity = 3.402823e+38
-const NegativeInfinity = -2.802597e-45
+const SIZE = 8
 
-export var blackAI = false
-export var whiteAI = true
-export var aiWaitTime = 0.5
+onready var stoneInstance = preload("res://Scenes/Stone.tscn")
+onready var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
 
-# warning-ignore:unused_class_variable
-export var flipDuration = 0.3
-# warning-ignore:unused_class_variable
-export var flipHeight = 2
+onready var normSpaceTexture = preload("res://Sprites/Space.png")
+onready var darkSpaceTexture = preload("res://Sprites/DarkSpace.png")
 
-var stoneInstance = preload("res://Scenes/Stone.tscn")
-var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
+onready var darkScore = get_parent().get_node("Scores/Dark")
+onready var lightScore = get_parent().get_node("Scores/Light")
 
-var spaceTexture = preload("res://Sprites/Space.png")
-var darkSpaceTexture = preload("res://Sprites/DarkSpace.png")
+var gameBoard : Array = []
 
-onready var turnSummary = get_parent().get_node("Turn Summary")
+var currentPlayer : String
 
-onready var blackScore = get_parent().get_node("Scores/Black Disc/Score")
-onready var whiteScore = get_parent().get_node("Scores/White Disc/Score")
-
-var gameBoard = []
-const SIZE = 8;
-
-var currentPlayer = "Black"
-var currentLegalMoves = []
-
-var selectedMove : Area
-var selectedStone : MeshInstance
-
-func place_stone_at(row : int, col : int, sideUp : String, board):
-	if currentLegalMoves.size() > 0:
-		currentLegalMoves.clear()
-		for legalMove in get_children():
-			if legalMove.get_class() == "Area":
-				legalMove.queue_free()
+func get_stone_on(row : int, col : int, board):
+	if row < 0 or row > SIZE or col < 0 or col > SIZE:
+		return
 	
-	var stone = board[row][col]
-	stone.set_translation(Vector3(col - 3.5, 0, row - 3.5))
+	for stone in board:
+		if stone.row == row and stone.col == col:
+			return stone
+
+func place_stone(row : int, col : int, sideUp : String, board):
+	var stone = get_stone_on(row, col, board)
+	
 	stone.sideUp = sideUp
-	if sideUp == "White": stone.set_rotation_degrees(Vector3(-180, 0, 0))
-	add_child(stone)
+	match sideUp:
+		"Dark": stone.set_rotation_degrees(Vector3(0, 0, 0))
+		"Light": stone.set_rotation_degrees(Vector3(-180, 0, 0))
 	
+	stone.set_translation(Vector3(col - 3.5, 0, row - 3.5))
+	add_child(stone)
 	return stone
 
-func create_board():
-	var board = []
-	for row in range(SIZE):
-		board.append([])
-		for col in range(SIZE):
-			var stone = stoneInstance.instance()
-			stone.row = row
-			stone.col = col
-			board[row].append(stone)
-	
-	return board
-func _ready():
-	gameBoard = create_board()
-	
-	place_stone_at(3, 3, "White", gameBoard)
-	place_stone_at(4, 4, "White", gameBoard)
-	place_stone_at(3, 4, "Black", gameBoard)
-	place_stone_at(4, 3, "Black", gameBoard)
-	
-	randomize()
-	
-	go_to_turn(currentPlayer)
-
-func neighbors_of(stone : MeshInstance, board):
+func neighbors_of(stone, board):
 	var neighbors = {}
-	if stone.row - 1 >= 0:
-		neighbors["NORTH"] = board[stone.row - 1][stone.col]
-	
-	if stone.row + 1 < SIZE:
-		neighbors["SOUTH"] = board[stone.row + 1][stone.col]
-	
-	if stone.col - 1 >= 0:
-		neighbors["WEST"] = board[stone.row][stone.col - 1]
-	
-	if stone.col + 1 < SIZE:
-		neighbors["EAST"] = board[stone.row][stone.col + 1]
-	
-	if stone.row - 1 >= 0 and stone.col - 1 >= 0:
-		neighbors["NORTHWEST"] = board[stone.row - 1][stone.col - 1]
-	
-	if stone.row - 1 >= 0 and stone.col + 1 < SIZE:
-		neighbors["NORTHEAST"] = board[stone.row - 1][stone.col + 1]
-		
-	if stone.row + 1 < SIZE and stone.col - 1 >= 0:
-		neighbors["SOUTHWEST"] = board[stone.row + 1][stone.col - 1]
-	
-	if stone.row + 1 < SIZE and stone.col + 1 < SIZE:
-		neighbors["SOUTHEAST"] = board[stone.row + 1][stone.col + 1]
-	
-	return neighbors;
 
-func enemy_of(player : String):
-	match player:
-		"Black": return "White"
-		"White": return "Black"
+	if stone.row - 1 >= 0: neighbors["NORTH"] = get_stone_on(stone.row - 1, stone.col, board)
+	if stone.row + 1 < SIZE: neighbors["SOUTH"] = get_stone_on(stone.row + 1, stone.col, board)
+	if stone.col - 1 >= 0: neighbors["WEST"] = get_stone_on(stone.row, stone.col - 1, board)
+	if stone.col + 1 < SIZE: neighbors["EAST"] = get_stone_on(stone.row, stone.col + 1, board)
+	
+	
+	if stone.row - 1 >= 0 and stone.col - 1 >= 0: neighbors["NORTHWEST"] = get_stone_on(stone.row - 1, stone.col - 1, board)
+	if stone.row - 1 >= 0 and stone.col + 1 < SIZE: neighbors["NORTHEAST"] = get_stone_on(stone.row - 1, stone.col + 1, board)
+	if stone.row + 1 < SIZE and stone.col - 1 >= 0: neighbors["SOUTHWEST"] = get_stone_on(stone.row + 1, stone.col - 1, board)
+	if stone.row + 1 < SIZE and stone.col + 1 < SIZE: neighbors["SOUTHEAST"] = get_stone_on(stone.row + 1, stone.col + 1, board)
+	
+	return neighbors
+
+func create_legal_move(row : int, col : int):
+	var legalMove = legalMoveInstance.instance()
+	legalMove.row = row
+	legalMove.col = col
+	legalMove.set_translation(Vector3(col - 3.5, 0, row - 3.5))
+	return legalMove
+
+func found_move(move, legalMoves):
+	for legalMove in legalMoves:
+		if move.row == legalMove.row and move.col == legalMove.col:
+			return true
+	
+	return false
+
+func get_legal_moves_for(player : String, board):
+	var legalMoves = []
+	var directions = ["NORTH", "SOUTH", "WEST", "EAST", "NORTHWEST", "NORTHEAST", "SOUTHWEST", "SOUTHEAST"]
+	for stone in board:
+		if stone.sideUp == player:
+			for direction in directions:
+				var search = search_for_move(direction, stone, board)
+				if search != null and not found_move(search, legalMoves):
+					legalMoves.append(search)
+	
+	return legalMoves
 
 func search_for_move(direction : String, rootStone : MeshInstance, var board):
 	var surroundingStones = neighbors_of(rootStone, board)
@@ -120,120 +94,82 @@ func search_for_move(direction : String, rootStone : MeshInstance, var board):
 			nextStones[direction] = otherSurroundingStones[direction]
 		
 		if nextStones[direction].sideUp == "":
-			var oppositeDirection = ""
-			match direction:
-				"NORTH": oppositeDirection = "SOUTH"
-				"SOUTH": oppositeDirection = "NORTH"
-				"WEST": oppositeDirection = "EAST"
-				"EAST": oppositeDirection = "WEST"
-				"NORTHWEST": oppositeDirection = "SOUTHEAST"
-				"SOUTHEAST": oppositeDirection = "NORTHWEST"
-				"NORTHEAST": oppositeDirection = "SOUTHWEST"
-				"SOUTHWEST": oppositeDirection = "NORTHEAST"
-			
-			nextStones[direction].flankDirections.append(oppositeDirection)
-			return nextStones[direction]
-	
-func get_legal_moves(player : String, board):
-	var stones = []
-	for i in range(SIZE):
-		for j in range(SIZE):
-			if board[i][j].sideUp == player:
-				stones.append(board[i][j])
-		
-	var directions = ["NORTH", "SOUTH", "WEST", "EAST", "NORTHWEST", "NORTHEAST", "SOUTHWEST", "SOUTHEAST"]
-	var legalMoves = []
-	for stone in stones:
-		for direction in directions:
-			var search = search_for_move(direction, stone, board)
-			if search != null and not legalMoves.has(search):
-				legalMoves.append(search)
-	
-	return legalMoves
+			return create_legal_move(nextStones[direction].row, nextStones[direction].col)
 
-func create_legal_move(location):
-	var legalMove = legalMoveInstance.instance()
-	legalMove.row = location.row
-	legalMove.col = location.col
-	legalMove.set_translation(Vector3(location.col - 3.5, 0, location.row - 3.5))
-		
-	if currentPlayer == "Black":
-		legalMove.selectable = not blackAI
-	elif currentPlayer == "White":
-		legalMove.selectable = not whiteAI
-		
-	add_child(legalMove)
-	
-	return legalMove
+func enemy_of(player : String):
+	match player:
+		"Dark": return "Light"
+		"Light": return "Dark"
 
-func show_legal_moves(moves):
-	for move in moves:
-		create_legal_move(move)
+func count(player : String, board):
+	var total = 0
+	for stone in board:
+		if stone.sideUp == player:
+			total += 1
+	return total
 
-func get_winner(board):
-	var blackDiscs = count("Black", board)
-	var whiteDiscs = count("White", board)
+func get_winner_from(board):
+	var blackCount = count("Dark", board)
+	var whiteCount = count("Light", board)
 	
-	if blackDiscs > whiteDiscs:
-		return "Black"
-	elif blackDiscs < whiteDiscs:
-		return "White"
-	
-	return "Tie"
+	if blackCount > whiteCount:
+		return "Dark"
+	elif blackCount < whiteCount:
+		return "Light"
 
-func go_to_turn(player : String):
-	selectedStone = null
+func begin_turn(player : String):
+	darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard))
+	lightScore.get_node("Score/Number").text = String(count("Light", gameBoard))
+	
+	var repeatedTurn = false
 	
 	currentPlayer = player
-	currentLegalMoves = get_legal_moves(currentPlayer, gameBoard)
-	var repeatedTurn = false
+	var currentLegalMoves = get_legal_moves_for(currentPlayer, gameBoard)
 	if currentLegalMoves.size() <= 0:
-		var enemyLegalMoves = get_legal_moves(enemy_of(currentPlayer), gameBoard)
-		if enemyLegalMoves.size() <= 0:
-			var winner = get_winner(gameBoard)
-			turnSummary.text = winner.to_upper() + " WON"
-			match winner:
-				"Black": turnSummary.add_color_override("font_color", Color.black)
-				"White": turnSummary.add_color_override("font_color", Color.white)
+		currentLegalMoves = get_legal_moves_for(enemy_of(currentPlayer), gameBoard)
+		if currentLegalMoves.size() <= 0:
+			match get_winner_from(gameBoard):
+				"Dark":
+					darkScore.get_node("Score/Space").texture = darkSpaceTexture
+					lightScore.get_node("Score/Space").texture = normSpaceTexture
+					
+					darkScore.get_node("Turn Summary").text = "WINNER\n"
+					lightScore.get_node("Turn Summary").text = "LOSER\n"
+				"Light":
+					lightScore.get_node("Score/Space").texture = darkSpaceTexture
+					darkScore.get_node("Score/Space").texture = normSpaceTexture
+					
+					lightScore.get_node("Turn Summary").text = "WINNER\n"
+					darkScore.get_node("Turn Summary").text = "LOSER\n"
+					
 			return
 		else:
+			currentPlayer = enemy_of(player)
 			repeatedTurn = true
-			currentPlayer = enemy_of(currentPlayer)
-			currentLegalMoves = enemyLegalMoves
+	
+	match currentPlayer:
+		"Dark":
+			darkScore.get_node("Score/Space").texture = darkSpaceTexture
+			lightScore.get_node("Score/Space").texture = normSpaceTexture
 			
-			turnSummary.text = currentPlayer.to_upper() + "'S TURN\nAGAIN"
-	else:
-		turnSummary.text = currentPlayer.to_upper() + "'S TURN"
+			if not repeatedTurn: darkScore.get_node("Turn Summary").text = "YOUR TURN\n"
+			else: darkScore.get_node("Turn Summary").text = "YOUR TURN\nAGAIN"
+			
+			lightScore.get_node("Turn Summary").text = "\n"
+		"Light":
+			lightScore.get_node("Score/Space").texture = darkSpaceTexture
+			darkScore.get_node("Score/Space").texture = normSpaceTexture
+			
+			if not repeatedTurn: lightScore.get_node("Turn Summary").text = "YOUR TURN\n"
+			else: lightScore.get_node("Turn Summary").text = "YOUR TURN\nAGAIN"
+			
+			darkScore.get_node("Turn Summary").text = "\n"
 	
-	var playerScore = null
-	var enemyScore = null
-	if currentPlayer == "Black":
-		playerScore = blackScore
-		enemyScore = whiteScore
-		turnSummary.add_color_override("font_color", Color.black)
-	elif currentPlayer == "White":
-		playerScore = whiteScore
-		enemyScore = blackScore
-		turnSummary.add_color_override("font_color", Color.white)
-	
-		
-	playerScore.get_node("Space").texture = darkSpaceTexture
-	enemyScore.get_node("Space").texture = spaceTexture
-	
-	blackScore.get_node("Number").text = String(count("Black", gameBoard))
-	whiteScore.get_node("Number").text = String(count("White", gameBoard))
-	
-	if blackAI and currentPlayer == "Black" or whiteAI and currentPlayer == "White":
-		var selectingMove = Timer.new()
-		selectingMove.wait_time = aiWaitTime
-		selectingMove.one_shot = true
-		add_child(selectingMove)
-		selectingMove.start()
-		selectingMove.connect("timeout", self, "find_ai_move")
-		yield(selectingMove, "timeout")
-		selectingMove.queue_free()
-	else:
-		show_legal_moves(currentLegalMoves)
+	place_legal_moves(currentLegalMoves)
+
+func place_legal_moves(moves):
+	for move in moves:
+		add_child(move)
 
 func calculate_score(player, board):
 	var score = 0
@@ -243,11 +179,14 @@ func calculate_score(player, board):
 	score -= count(enemy_of(player), board) / 100
 	
 	#Evaulate legal moves
-	score += len(get_legal_moves(player, board))
-	score -= len(get_legal_moves(enemy_of(player), board))
+	score += len(get_legal_moves_for(player, board))
+	score -= len(get_legal_moves_for(enemy_of(player), board))
 	
 	#Evaulate corners captured
-	var corners = [board[0][0], board[0][SIZE - 1], board[SIZE - 1][0], board[SIZE - 1][SIZE - 1]]
+	var corners = [	get_stone_on(0, 0, board), 
+					get_stone_on(0, SIZE - 1, board), 
+					get_stone_on(SIZE - 1, 0, board), 
+					get_stone_on(SIZE - 1, SIZE - 1, board)]
 	var playerCornersCount = 0
 	var enemyCornersCount = 0
 	for corner in corners:
@@ -260,96 +199,21 @@ func calculate_score(player, board):
 	score -= 10 * enemyCornersCount
 	
 	return score
-	
-func mini_max(board, depth=3, alpha=NegativeInfinity, beta=PositiveInfinity, maxPlayer=true):
-	var moves
-	if maxPlayer == true:
-		moves = get_legal_moves(currentPlayer, board)
-	else:
-		moves = get_legal_moves(enemy_of(currentPlayer), board)
-	
-	if depth == 0 or moves.size() <= 0:
-		return calculate_score(currentPlayer, board)
-	
-	var value = 0
-	if maxPlayer:
-		value = NegativeInfinity
-		for move in moves:
-			var futureBoard = board.duplicate(true)
-			futureBoard[move.row][move.col].sideUp = currentPlayer
-			
-			value = max(value, mini_max(futureBoard, depth - 1, alpha, beta, false))
-			alpha = max(alpha, value)
-			
-			if alpha >= beta:
-				break
-		return value
-	else:
-		value = PositiveInfinity
-		for move in moves:
-			var futureBoard = board.duplicate(true)
-			futureBoard[move.row][move.col].sideUp = enemy_of(currentPlayer)
-			
-			value = min(value, mini_max(futureBoard, depth - 1, alpha, beta, true))
-			beta = min(beta, value)
-			
-			if alpha >= beta:
-				break
-		
-		return value
 
-func pick_best_move(moves, board):
-	var bestMove = moves[randi() % moves.size()]
-	var bestValue = NegativeInfinity
-	
-	for move in moves:
-		var futureBoard = board.duplicate(true)
-		futureBoard[move.row][move.col].sideUp = currentPlayer
-		
-		var value = mini_max(futureBoard)
-		if bestValue > value:
-			bestMove = move
-			value = bestValue
-	
-	return bestMove
 
-func find_ai_move():
-	selectedMove = create_legal_move(pick_best_move(currentLegalMoves, gameBoard))
-	
-	var placeStone = Timer.new()
-	placeStone.wait_time = aiWaitTime
-	placeStone.one_shot = true
-	add_child(placeStone)
-	placeStone.start()
-	placeStone.connect("timeout", self, "apply_ai_move")
-	yield(placeStone, "timeout")
-	placeStone.queue_free()
 
-func apply_ai_move():
-	selectedStone = place_stone_at(selectedMove.row, selectedMove.col, currentPlayer, gameBoard)
-	for stone in selectedStone.flipStones:
-		stone.flip()
+func _ready():
+	for row in range(SIZE):
+		for col in range(SIZE):
+			var stone = stoneInstance.instance()
+			stone.row = row
+			stone.col = col
+			stone.sideUp = ""
+			gameBoard.append(stone)
 	
-	#Recreating the board with updated stones because 'board.duplicate(true)' doesn't deep copy it
-	gameBoard = create_board()
-	for stone in get_children():
-		if stone.get_class() == "MeshInstance":
-			gameBoard[stone.row][stone.col] = stone
-
-func count(player : String, board):
-	var total = 0
-	for i in range(SIZE):
-		for j in range(SIZE):
-			if board[i][j].sideUp == player:
-				total += 1
+	place_stone(3, 3, "Light", gameBoard)
+	place_stone(4, 4, "Light", gameBoard)
+	place_stone(3, 4, "Dark", gameBoard)
+	place_stone(4, 3, "Dark", gameBoard)
 	
-	return total
-
-# warning-ignore:unused_argument
-func _process(delta):
-	if selectedStone != null:
-		for stone in selectedStone.flipStones:
-			if not stone.flipped:
-				return
-		
-		go_to_turn(enemy_of(currentPlayer))
+	begin_turn("Dark")

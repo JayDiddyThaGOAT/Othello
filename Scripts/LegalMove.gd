@@ -1,43 +1,57 @@
 extends Area
 
-onready var game = get_parent()
-onready var gameBoard = game.gameBoard
-onready var currentPlayer = game.currentPlayer
-
-onready var meshForModel = get_node("Model")
-onready var material = meshForModel.mesh.surface_get_material(0).duplicate()
+onready var board = get_parent()
+onready var model = get_node("Model")
+onready var material = model.mesh.surface_get_material(0).duplicate()
 
 var row : int
 var col : int
-var selectable : bool
-var stone
+
+var flipStones = []
+
+func to_string():
+	return String(row) + "" + String(col)
 
 func _ready():
-	stone = gameBoard[row][col]
-	stone.flipStones.clear()
-	
-	var flankDirections = stone.flankDirections
-	while len(stone.flankDirections) > 0:
-		var currentDirection = stone.flankDirections.pop_front()
-		var	nextStone = game.neighbors_of(stone, gameBoard)[currentDirection]
-		while nextStone.sideUp == game.enemy_of(currentPlayer):
-			stone.flipStones.append(nextStone)
-			
-			var surroundingStones = game.neighbors_of(nextStone, gameBoard)
-			if not surroundingStones.has(currentDirection):
+	var flankDirections = board.neighbors_of(board.get_stone_on(row, col, board.gameBoard), board.gameBoard)
+	for direction in flankDirections:
+		var stones = []
+		var stone = flankDirections[direction]
+		while stone.sideUp == board.enemy_of(board.currentPlayer):
+			stones.append(stone)
+			var surroundingStones = board.neighbors_of(stone, board.gameBoard)
+			if not surroundingStones.has(direction):
 				break
-			
-			nextStone = game.neighbors_of(nextStone, gameBoard)[currentDirection]
+				
+			stone = surroundingStones[direction]
+		
+		if stone.sideUp == board.currentPlayer:
+			for stone in stones:
+				flipStones.append(stone)
 	
-	material.albedo_color = Color(0, 0, 0, material.albedo_color.a + ((stone.flipStones.size() - 1) * 0.1))
-	meshForModel.set_surface_material(0, material)
-	
-# warning-ignore:unused_argument
-# warning-ignore:unused_argument
-# warning-ignore:unused_argument
-# warning-ignore:unused_argument
-func apply_move(camera, event, click_position, click_normal, shape_idx):
-	if event is InputEventMouseButton and selectable:
-		game.selectedStone = game.place_stone_at(stone.row, stone.col, game.currentPlayer, gameBoard)
-		for stone in game.selectedStone.flipStones:
+	material.albedo_color = Color(0, 0, 0, material.albedo_color.a + ((flipStones.size() - 1) * 0.125))
+	print(material.albedo_color)
+	model.set_surface_material(0, material)
+
+func run_player_move(camera, event, click_position, click_normal, shape_idx):
+	if event is InputEventMouseButton:
+		board.place_stone(row, col, board.currentPlayer, board.gameBoard)
+		
+		for move in board.get_children():
+			if move.get_class() == "Area":
+				if move == self:
+					move.visible = false
+				else:
+					move.queue_free()
+		
+		for stone in flipStones:
 			stone.flip()
+		
+func _process(delta):
+	if not visible:
+		for stone in flipStones:
+			if not stone.flipped:
+				return
+		
+		board.begin_turn(board.enemy_of(board.currentPlayer))
+		queue_free()
