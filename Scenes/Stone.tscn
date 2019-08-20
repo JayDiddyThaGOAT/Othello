@@ -41,4 +41,3 @@ flipDuration = 0.25
 
 [node name="Tween" type="Tween" parent="."]
 [connection signal="tween_all_completed" from="Tween" to="." method="finish_flip"]
-[connection signal="tween_started" from="Tween" to="." method="flip"]

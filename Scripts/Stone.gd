@@ -30,10 +30,7 @@ func flip():
 	yield(tween, "tween_all_completed")
 
 func finish_flip():
-	if sideUp == "Dark":
-		sideUp = "Light"
-	elif sideUp == "Light":
-		sideUp = "Dark"
+	sideUp = get_parent().enemy_of(sideUp)
 	
 	if abs(int(get_rotation_degrees().x)) >= 360:
 		set_rotation_degrees(Vector3(abs(int(get_rotation_degrees().x)) - 360, 0, 0))
