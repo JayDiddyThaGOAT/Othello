@@ -1,7 +1,5 @@
 extends Area
 
-signal finished
-
 onready var board = get_parent()
 
 onready var model = get_node("Model")
@@ -65,9 +63,13 @@ func run_ai_move():
 
 func _process(delta):
 	if not visible:
-		for stone in flipStones:
-			if not stone.flipped:
-				return
-		
-		board.begin_turn(board.enemy_of(board.currentPlayer))
-		queue_free()
+		if flipStones.size() > 0:
+			for stone in flipStones:
+				if not stone.flipped:
+					return
+			flipStones.clear()
+			board.update_hud(board.enemy_of(board.currentPlayer))
+			yield(board, "up_to_date")
+		else:
+			board.begin_turn()
+			queue_free()

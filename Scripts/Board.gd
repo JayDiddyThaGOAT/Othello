@@ -1,5 +1,7 @@
 extends MeshInstance
 
+signal up_to_date
+
 const SIZE = 8
 const DIRECTIONS = ["NORTH", "SOUTH", "WEST", "EAST", "NORTHWEST", "NORTHEAST", "SOUTHWEST", "SOUTHEAST"]
 
@@ -16,9 +18,9 @@ onready var darkScore = get_parent().get_node("Scores/Dark")
 onready var lightScore = get_parent().get_node("Scores/Light")
 
 var gameBoard : Array = []
-var currentPlayer : String = "Dark"
 
-var scoreThread
+var currentPlayer : String = "Dark"
+var currentLegalMoves : Array = []
 
 func _ready():
 	for row in range(SIZE):
@@ -31,8 +33,10 @@ func _ready():
 	place_stone(3, 4, "Dark", gameBoard)
 	place_stone(4, 3, "Dark", gameBoard)
 	
-	update_scores()
-	begin_turn(currentPlayer)
+	randomize()
+	
+	update_hud(currentPlayer)
+	begin_turn()
 
 func create_board_based_on(board : Array):
 	var copy : Array = []
@@ -46,9 +50,72 @@ func create_board_based_on(board : Array):
 	
 	return copy
 
-func update_scores():
+func update_hud(player : String):
 	darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard))
 	lightScore.get_node("Score/Number").text = String(count("Light", gameBoard))
+	
+	var repeatedTurn
+	
+	var playerLegalMoves = get_legal_moves_from(player, gameBoard)
+	if playerLegalMoves.size() <= 0:
+		var enemyLegalMoves = get_legal_moves_from(enemy_of(player), gameBoard)
+		if enemyLegalMoves.size() <= 0:
+			match get_winner_from(gameBoard):
+				"Dark":
+					darkScore.get_node("Score/Space").texture = darkSpaceTexture
+					lightScore.get_node("Score/Space").texture = normSpaceTexture
+					
+					darkScore.get_node("Turn Summary").text = "WINNER\n"
+					lightScore.get_node("Turn Summary").text = "LOSER\n"
+				"Light":
+					lightScore.get_node("Score/Space").texture = darkSpaceTexture
+					darkScore.get_node("Score/Space").texture = normSpaceTexture
+					
+					lightScore.get_node("Turn Summary").text = "WINNER\n"
+					darkScore.get_node("Turn Summary").text = "LOSER\n"
+				"Tie":
+					darkScore.get_node("Score/Space").texture = darkSpaceTexture
+					lightScore.get_node("Score/Space").texture = darkSpaceTexture
+					
+					darkScore.get_node("Turn Summary").text = "TIE\n"
+					lightScore.get_node("Turn Summary").text = "TIE\n"
+					
+			return
+		else:
+			currentLegalMoves = enemyLegalMoves
+			currentPlayer = enemy_of(player)
+			repeatedTurn = true
+	else:
+		currentLegalMoves = playerLegalMoves
+		currentPlayer = player
+		repeatedTurn = false
+	
+	match currentPlayer:
+		"Dark":
+			darkScore.get_node("Score/Space").texture = darkSpaceTexture
+			lightScore.get_node("Score/Space").texture = normSpaceTexture
+			
+			if not repeatedTurn: darkScore.get_node("Turn Summary").text = "YOUR TURN\n"
+			else: darkScore.get_node("Turn Summary").text = "YOUR TURN\nAGAIN"
+			
+			lightScore.get_node("Turn Summary").text = "\n"
+		"Light":
+			lightScore.get_node("Score/Space").texture = darkSpaceTexture
+			darkScore.get_node("Score/Space").texture = normSpaceTexture
+			
+			if not repeatedTurn: lightScore.get_node("Turn Summary").text = "YOUR TURN\n"
+			else: lightScore.get_node("Turn Summary").text = "YOUR TURN\nAGAIN"
+			
+			darkScore.get_node("Turn Summary").text = "\n"
+	
+	emit_signal("up_to_date")
+
+func begin_turn():
+	if currentPlayer == "Dark" and not darkAI or currentPlayer == "Light" and not lightAI:
+		place_legal_moves(currentLegalMoves)
+	else:
+		var bestMove = place_best_move(currentLegalMoves)
+		bestMove.AI.start()
 
 func calculate_score(player, board):
 	var score = 0
@@ -213,7 +280,7 @@ func place_legal_moves(legalMoves):
 	for move in legalMoves:
 		add_child(move)
 	
-func mini_max(board : Array, depth : int = 2, alpha : float = -INF, beta : float = INF, maxPlayer : bool = true):
+func mini_max(board : Array, alpha : float = -INF, beta : float = INF, maxPlayer : bool = true):
 	var moves
 	var player
 	if maxPlayer:
@@ -223,7 +290,8 @@ func mini_max(board : Array, depth : int = 2, alpha : float = -INF, beta : float
 		moves = get_legal_moves_from(enemy_of(currentPlayer), board)
 		player = enemy_of(currentPlayer)
 	
-	if depth == 0 or moves.size() <= 0:
+	
+	if calculate_score(player, board) >= calculate_score(enemy_of(player), board):
 		return calculate_score(player, board)
 	
 	if maxPlayer:
@@ -236,7 +304,7 @@ func mini_max(board : Array, depth : int = 2, alpha : float = -INF, beta : float
 			stone.sideUp = currentPlayer
 			futureBoard[move.row][move.col] = stone
 			
-			value = max(value, mini_max(futureBoard, depth - 1, alpha, beta, false))
+			value = max(value, mini_max(futureBoard, alpha, beta, false))
 			alpha = max(alpha, value)
 			
 			if alpha >= beta:
@@ -252,7 +320,7 @@ func mini_max(board : Array, depth : int = 2, alpha : float = -INF, beta : float
 			stone.sideUp = enemy_of(currentPlayer)
 			futureBoard[move.row][move.col] = stone
 			
-			value = min(value, mini_max(futureBoard, depth - 1, alpha, beta, true))
+			value = min(value, mini_max(futureBoard, alpha, beta, true))
 			beta = min(beta, value)
 			
 			if alpha >= beta:
@@ -275,65 +343,9 @@ func place_best_move(moves):
 		if value > bestValue:
 			bestMove = move
 			bestValue = value
-	
+		elif value == bestValue and randf() > 0.5:
+			bestMove = move
+			bestValue = value
+			
 	add_child(bestMove)
 	return bestMove
-
-func begin_turn(player : String):
-	var repeatedTurn = false
-	
-	currentPlayer = player
-	var currentLegalMoves = get_legal_moves_from(currentPlayer, gameBoard)
-	if currentLegalMoves.size() <= 0:
-		currentLegalMoves = get_legal_moves_from(enemy_of(currentPlayer), gameBoard)
-		if currentLegalMoves.size() <= 0:
-			match get_winner_from(gameBoard):
-				"Dark":
-					darkScore.get_node("Score/Space").texture = darkSpaceTexture
-					lightScore.get_node("Score/Space").texture = normSpaceTexture
-					
-					darkScore.get_node("Turn Summary").text = "WINNER\n"
-					lightScore.get_node("Turn Summary").text = "LOSER\n"
-				"Light":
-					lightScore.get_node("Score/Space").texture = darkSpaceTexture
-					darkScore.get_node("Score/Space").texture = normSpaceTexture
-					
-					lightScore.get_node("Turn Summary").text = "WINNER\n"
-					darkScore.get_node("Turn Summary").text = "LOSER\n"
-				"Tie":
-					darkScore.get_node("Score/Space").texture = darkSpaceTexture
-					lightScore.get_node("Score/Space").texture = darkSpaceTexture
-					
-					darkScore.get_node("Turn Summary").text = "TIE\n"
-					lightScore.get_node("Turn Summary").text = "TIE	\n"
-					
-			return
-		else:
-			currentPlayer = enemy_of(player)
-			repeatedTurn = true
-	
-	match currentPlayer:
-		"Dark":
-			darkScore.get_node("Score/Space").texture = darkSpaceTexture
-			lightScore.get_node("Score/Space").texture = normSpaceTexture
-			
-			if not repeatedTurn: darkScore.get_node("Turn Summary").text = "YOUR TURN\n"
-			else: darkScore.get_node("Turn Summary").text = "YOUR TURN\nAGAIN"
-			
-			lightScore.get_node("Turn Summary").text = "\n"
-		"Light":
-			lightScore.get_node("Score/Space").texture = darkSpaceTexture
-			darkScore.get_node("Score/Space").texture = normSpaceTexture
-			
-			if not repeatedTurn: lightScore.get_node("Turn Summary").text = "YOUR TURN\n"
-			else: lightScore.get_node("Turn Summary").text = "YOUR TURN\nAGAIN"
-			
-			darkScore.get_node("Turn Summary").text = "\n"
-	
-	update_scores()
-	if currentPlayer == "Dark" and not darkAI or currentPlayer == "Light" and not lightAI:
-		place_legal_moves(currentLegalMoves)
-	else:
-		yield(get_tree().create_timer(0.1), "timeout")
-		var bestMove = place_best_move(currentLegalMoves)
-		bestMove.AI.start()
