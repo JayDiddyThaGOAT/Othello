@@ -7,6 +7,7 @@ const DIRECTIONS = ["NORTH", "SOUTH", "WEST", "EAST", "NORTHWEST", "NORTHEAST", 
 
 export var darkAI = false
 export var lightAI = true
+export var maxDepth = 2
 
 onready var stoneInstance = preload("res://Scenes/Stone.tscn")
 onready var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
@@ -36,24 +37,11 @@ func _ready():
 	randomize()
 	
 	update_hud(currentPlayer)
+	if darkAI:
+		yield(get_tree().create_timer(currentLegalMoves[0].get_node("AI").wait_time), "timeout")
 	begin_turn()
 
-func create_board_based_on(board : Array):
-	var copy : Array = []
-	for row in range(SIZE):
-		copy.append([])
-		for col in range(SIZE):
-			if board[row][col] == null:
-				copy[row].append(null)
-			else:
-				copy[row].append(board[row][col])
-	
-	return copy
-
 func update_hud(player : String):
-	darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard))
-	lightScore.get_node("Score/Number").text = String(count("Light", gameBoard))
-	
 	var repeatedTurn
 	
 	var playerLegalMoves = get_legal_moves_from(player, gameBoard)
@@ -65,17 +53,24 @@ func update_hud(player : String):
 					darkScore.get_node("Score/Space").texture = darkSpaceTexture
 					lightScore.get_node("Score/Space").texture = normSpaceTexture
 					
+					darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard) + count("", gameBoard))
+					
 					darkScore.get_node("Turn Summary").text = "WINNER\n"
 					lightScore.get_node("Turn Summary").text = "LOSER\n"
 				"Light":
 					lightScore.get_node("Score/Space").texture = darkSpaceTexture
 					darkScore.get_node("Score/Space").texture = normSpaceTexture
 					
+					lightScore.get_node("Score/Number").text = String(count("Light", gameBoard) + count("", gameBoard))
+					
 					lightScore.get_node("Turn Summary").text = "WINNER\n"
 					darkScore.get_node("Turn Summary").text = "LOSER\n"
 				"Tie":
 					darkScore.get_node("Score/Space").texture = darkSpaceTexture
 					lightScore.get_node("Score/Space").texture = darkSpaceTexture
+					
+					darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard) + count("", gameBoard))
+					lightScore.get_node("Score/Number").text = String(count("Light", gameBoard) + count("", gameBoard))
 					
 					darkScore.get_node("Turn Summary").text = "TIE\n"
 					lightScore.get_node("Turn Summary").text = "TIE\n"
@@ -89,22 +84,38 @@ func update_hud(player : String):
 		currentLegalMoves = playerLegalMoves
 		currentPlayer = player
 		repeatedTurn = false
+
+	darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard))
+	lightScore.get_node("Score/Number").text = String(count("Light", gameBoard))
 	
 	match currentPlayer:
 		"Dark":
 			darkScore.get_node("Score/Space").texture = darkSpaceTexture
 			lightScore.get_node("Score/Space").texture = normSpaceTexture
 			
-			if not repeatedTurn: darkScore.get_node("Turn Summary").text = "YOUR TURN\n"
-			else: darkScore.get_node("Turn Summary").text = "YOUR TURN\nAGAIN"
+			var playerType
+			if not darkAI:
+				playerType = "YOUR"
+			else:
+				playerType = "CPU"
+				
+			
+			if not repeatedTurn: darkScore.get_node("Turn Summary").text = playerType + " TURN\n"
+			else: darkScore.get_node("Turn Summary").text = playerType + " TURN\nAGAIN"
 			
 			lightScore.get_node("Turn Summary").text = "\n"
 		"Light":
 			lightScore.get_node("Score/Space").texture = darkSpaceTexture
 			darkScore.get_node("Score/Space").texture = normSpaceTexture
 			
-			if not repeatedTurn: lightScore.get_node("Turn Summary").text = "YOUR TURN\n"
-			else: lightScore.get_node("Turn Summary").text = "YOUR TURN\nAGAIN"
+			var playerType
+			if not lightAI:
+				playerType = "YOUR"
+			else:
+				playerType = "CPU"
+			
+			if not repeatedTurn: lightScore.get_node("Turn Summary").text = playerType + " TURN\n"
+			else: lightScore.get_node("Turn Summary").text = playerType + " TURN\nAGAIN"
 			
 			darkScore.get_node("Turn Summary").text = "\n"
 	
@@ -117,7 +128,7 @@ func begin_turn():
 		var bestMove = place_best_move(currentLegalMoves)
 		bestMove.AI.start()
 
-func calculate_score(player, board):
+func calculate_score(player : String, board : Array):
 	var score = 0
 	
 	#Evaulate disc count
@@ -151,11 +162,15 @@ func count(player : String, board):
 	for row in range(SIZE):
 		for col in range(SIZE):
 			var stone = board[row][col]
-			if stone == null:
-				continue
+			if player == "":
+				if stone == null:
+					total += 1
+			else:
+				if stone == null:
+					continue
 			
-			if stone.sideUp == player:
-				total += 1
+				if stone.sideUp == player:
+					total += 1
 	return total
 
 func enemy_of(player : String):
@@ -277,75 +292,73 @@ func get_legal_moves_from(player : String, board):
 	return legalMoves
 
 func place_legal_moves(legalMoves):
+	if legalMoves.size() <= 0:
+		return
+	
 	for move in legalMoves:
 		add_child(move)
+
+func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
+	var moves = get_legal_moves_from(currentPlayer, board)
+	if depth == maxDepth or moves.size() <= 0:
+		return calculate_score(currentPlayer, board)
 	
-func mini_max(board : Array, alpha : float = -INF, beta : float = INF, maxPlayer : bool = true):
-	var moves
-	var player
-	if maxPlayer:
-		moves = get_legal_moves_from(currentPlayer, board)
-		player = currentPlayer
-	else:
-		moves = get_legal_moves_from(enemy_of(currentPlayer), board)
-		player = enemy_of(currentPlayer)
-	
-	
-	if calculate_score(player, board) >= calculate_score(enemy_of(player), board):
-		return calculate_score(player, board)
-	
-	if maxPlayer:
-		var value = -INF
-		for move in moves:
-			var futureBoard = create_board_based_on(board)
-			var stone = stoneInstance.instance()
-			stone.row = move.row
-			stone.col = move.col
-			stone.sideUp = currentPlayer
-			futureBoard[move.row][move.col] = stone
-			
-			value = max(value, mini_max(futureBoard, alpha, beta, false))
-			alpha = max(alpha, value)
-			
-			if alpha >= beta:
-				break
-		return value
-	else:
-		var value = INF
-		for move in moves:
-			var futureBoard = create_board_based_on(board)
-			var stone = stoneInstance.instance()
-			stone.row = move.row
-			stone.col = move.col
-			stone.sideUp = enemy_of(currentPlayer)
-			futureBoard[move.row][move.col] = stone
-			
-			value = min(value, mini_max(futureBoard, alpha, beta, true))
-			beta = min(beta, value)
-			
-			if alpha >= beta:
-				break
+	var value = -INF
+	for move in moves:
+		board[move.row][move.col] = stoneInstance.instance()
+		board[move.row][move.col].row = move.row
+		board[move.row][move.col].col = move.col
+		board[move.row][move.col].sideUp = currentPlayer
 		
-		return value
+		value = max(value, min_turn(board, depth + 1, alpha, beta))
+		alpha = max(alpha, value)
+		
+		board[move.row][move.col] = null
+		
+		if alpha >= beta:
+			break
+	
+	return value
+	
+func min_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
+	var moves = get_legal_moves_from(enemy_of(currentPlayer), board)
+	if depth == maxDepth or moves.size() <= 0:
+		return calculate_score(enemy_of(currentPlayer), board)
+	
+	var value = INF
+	for move in moves:
+		board[move.row][move.col] = stoneInstance.instance()
+		board[move.row][move.col].row = move.row
+		board[move.row][move.col].col = move.col
+		board[move.row][move.col].sideUp = enemy_of(currentPlayer)
+		
+		value = min(value, max_turn(board, depth + 1, alpha, beta))
+		beta = min(beta, value)
+		
+		board[move.row][move.col] = null
+		
+		if alpha >= beta:
+			break
+	
+	return value
 
 func place_best_move(moves):
 	var bestMove = moves[randi() % moves.size()]
 	var bestValue = -INF
+	
 	for move in moves:
-		var futureBoard = create_board_based_on(gameBoard)
-		var stone = stoneInstance.instance()
-		stone.row = move.row
-		stone.col = move.col
-		stone.sideUp = currentPlayer
-		futureBoard[move.row][move.col] = stone
+		gameBoard[move.row][move.col] = stoneInstance.instance()
+		gameBoard[move.row][move.col].row = move.row
+		gameBoard[move.row][move.col].col = move.col
+		gameBoard[move.row][move.col].sideUp = currentPlayer
 		
-		var value = mini_max(futureBoard)
-		if value > bestValue:
+		var value = max_turn(gameBoard)
+		
+		gameBoard[move.row][move.col] = null
+		
+		if value > bestValue or value == bestValue and randf() < 0.5:
 			bestMove = move
 			bestValue = value
-		elif value == bestValue and randf() > 0.5:
-			bestMove = move
-			bestValue = value
-			
+	
 	add_child(bestMove)
 	return bestMove
