@@ -40,54 +40,58 @@ func _ready():
 	if darkAI:
 		yield(get_tree().create_timer(currentLegalMoves[0].get_node("AI").wait_time), "timeout")
 	begin_turn()
+	
+func up_next(nextPlayer : String, board : Array):
+	var nextEnemyLegalMoves = get_legal_moves_from(enemy_of(nextPlayer), board)
+	if nextEnemyLegalMoves.size() > 0:
+		return enemy_of(nextPlayer)
+	else:
+		var nextPlayerLegalMoves = get_legal_moves_from(nextPlayer, board)
+		if nextPlayerLegalMoves.size() > 0:
+			return nextPlayer
+		else:
+			return null
 
 func update_hud(player : String):
 	var repeatedTurn
 	
-	var playerLegalMoves = get_legal_moves_from(player, gameBoard)
-	if playerLegalMoves.size() <= 0:
-		var enemyLegalMoves = get_legal_moves_from(enemy_of(player), gameBoard)
-		if enemyLegalMoves.size() <= 0:
-			match get_winner_from(gameBoard):
-				"Dark":
-					darkScore.get_node("Score/Space").texture = darkSpaceTexture
-					lightScore.get_node("Score/Space").texture = normSpaceTexture
-					
-					darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard) + count("", gameBoard))
-					
-					darkScore.get_node("Turn Summary").text = "WINNER\n"
-					lightScore.get_node("Turn Summary").text = "LOSER\n"
-				"Light":
-					lightScore.get_node("Score/Space").texture = darkSpaceTexture
-					darkScore.get_node("Score/Space").texture = normSpaceTexture
-					
-					lightScore.get_node("Score/Number").text = String(count("Light", gameBoard) + count("", gameBoard))
-					
-					lightScore.get_node("Turn Summary").text = "WINNER\n"
-					darkScore.get_node("Turn Summary").text = "LOSER\n"
-				"Tie":
-					darkScore.get_node("Score/Space").texture = darkSpaceTexture
-					lightScore.get_node("Score/Space").texture = darkSpaceTexture
-					
-					darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard) + count("", gameBoard))
-					lightScore.get_node("Score/Number").text = String(count("Light", gameBoard) + count("", gameBoard))
-					
-					darkScore.get_node("Turn Summary").text = "TIE\n"
-					lightScore.get_node("Turn Summary").text = "TIE\n"
-					
-			return
-		else:
-			currentLegalMoves = enemyLegalMoves
-			currentPlayer = enemy_of(player)
-			repeatedTurn = true
-	else:
-		currentLegalMoves = playerLegalMoves
-		currentPlayer = player
-		repeatedTurn = false
-
 	darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard))
 	lightScore.get_node("Score/Number").text = String(count("Light", gameBoard))
 	
+	var nextPlayer = up_next(enemy_of(player), gameBoard)
+	
+	if nextPlayer == null:
+		match get_winner_from(gameBoard):
+			"Dark":
+				darkScore.get_node("Score/Space").texture = darkSpaceTexture
+				lightScore.get_node("Score/Space").texture = normSpaceTexture
+				
+				darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard) + count("", gameBoard))
+				
+				darkScore.get_node("Turn Summary").text = "WINNER\n"
+				lightScore.get_node("Turn Summary").text = "LOSER\n"
+			"Light":
+				lightScore.get_node("Score/Space").texture = darkSpaceTexture
+				darkScore.get_node("Score/Space").texture = normSpaceTexture
+				
+				lightScore.get_node("Score/Number").text = String(count("Light", gameBoard) + count("", gameBoard))
+				
+				lightScore.get_node("Turn Summary").text = "WINNER\n"
+				darkScore.get_node("Turn Summary").text = "LOSER\n"
+			"Tie":
+				darkScore.get_node("Score/Space").texture = darkSpaceTexture
+				lightScore.get_node("Score/Space").texture = darkSpaceTexture
+				
+				darkScore.get_node("Score/Number").text = String(count("Dark", gameBoard) + count("", gameBoard))
+				lightScore.get_node("Score/Number").text = String(count("Light", gameBoard) + count("", gameBoard))
+				
+				darkScore.get_node("Turn Summary").text = "TIE\n"
+				lightScore.get_node("Turn Summary").text = "TIE\n"
+		
+		return
+	
+	currentPlayer = nextPlayer
+	currentLegalMoves = get_legal_moves_from(currentPlayer, gameBoard)
 	match currentPlayer:
 		"Dark":
 			darkScore.get_node("Score/Space").texture = darkSpaceTexture
@@ -129,8 +133,8 @@ func begin_turn():
 		bestMove.AI.start()
 
 func calculate_score(player : String, board : Array):
-	var score = 0
 	
+	var score = 0
 	#Evaulate disc count
 	score += count(player, board) / 100
 	score -= count(enemy_of(player), board) / 100
@@ -179,29 +183,52 @@ func enemy_of(player : String):
 		"Light": return "Dark"
 
 func get_winner_from(board):
-	var blackCount = count("Dark", board)
-	var whiteCount = count("Light", board)
+	var darkCount = count("Dark", board)
+	var lightCount = count("Light", board)
 	
-	if blackCount > whiteCount:
+	if darkCount > lightCount:
 		return "Dark"
-	elif blackCount < whiteCount:
+	elif darkCount < lightCount:
 		return "Light"
 	else:
 		return "Tie"
 
-func place_stone(row : int, col : int, sideUp : String, board : Array):
+func add_stone_on_board(row : int, col : int, sideUp : String, board : Array):
 	board[row][col] = stoneInstance.instance()
 	board[row][col].row = row
 	board[row][col].col = col
-	board[row][col].set_translation(Vector3(col - 3.5, 0, row - 3.5))
-	
 	board[row][col].sideUp = sideUp
-	match board[row][col].sideUp:
-		"Dark": board[row][col].set_rotation_degrees(Vector3(0, 0, 0))
-		"Light": board[row][col].set_rotation_degrees(Vector3(-180, 0, 0))
 	
-	add_child(board[row][col])
 	return board[row][col]
+
+func get_flipped_stones(row : int, col : int, sideUp : String, board : Array):
+	var flankDirections = neighbors_at(row, col, board)
+	var flipStones = []
+	for direction in flankDirections:
+		var stones = []
+		var stone = flankDirections[direction]
+		while stone != null and stone.sideUp == enemy_of(sideUp):
+			stones.append(stone)
+			var surroundingStones = neighbors_at(stone.row, stone.col, board)
+			if not surroundingStones.has(direction):
+				break
+				
+			stone = surroundingStones[direction]
+		
+		if stone != null and stone.sideUp == sideUp:
+			for stone in stones:
+				flipStones.append(stone)
+	
+	return flipStones
+
+func place_stone(row : int, col : int, sideUp : String, board : Array):
+	var stone = add_stone_on_board(row, col, sideUp, board)
+	stone.set_translation(Vector3(col - 3.5, 0, row - 3.5))
+	match stone.sideUp:
+		"Dark": stone.set_rotation_degrees(Vector3(0, 0, 0))
+		"Light": stone.set_rotation_degrees(Vector3(-180, 0, 0))
+	
+	add_child(stone)
 
 func neighbors_at(row : int, col : int, board : Array):
 	var neighbors = {}
@@ -222,7 +249,7 @@ func create_legal_move(row : int, col : int):
 	var legalMove = legalMoveInstance.instance()
 	legalMove.row = row
 	legalMove.col = col
-	legalMove.set_translation(Vector3(col - 3.5, 0, row - 3.5))
+	legalMove.set_translation(Vector3(col - 3.5, legalMoveInstance.instance().get_translation().y, row - 3.5))
 	
 	return legalMove
 
@@ -305,15 +332,15 @@ func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float
 	
 	var value = -INF
 	for move in moves:
-		board[move.row][move.col] = stoneInstance.instance()
-		board[move.row][move.col].row = move.row
-		board[move.row][move.col].col = move.col
-		board[move.row][move.col].sideUp = currentPlayer
+		board[move.row][move.col] = add_stone_on_board(move.row, move.col, currentPlayer, board)
+		var flipStones = get_flipped_stones(move.row, move.col, currentPlayer, board)
 		
 		value = max(value, min_turn(board, depth + 1, alpha, beta))
 		alpha = max(alpha, value)
 		
 		board[move.row][move.col] = null
+		for stone in flipStones:
+			stone.sideUp = enemy_of(currentPlayer)
 		
 		if alpha >= beta:
 			break
@@ -323,19 +350,19 @@ func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float
 func min_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
 	var moves = get_legal_moves_from(enemy_of(currentPlayer), board)
 	if depth == maxDepth or moves.size() <= 0:
-		return calculate_score(enemy_of(currentPlayer), board)
+		return calculate_score(currentPlayer, board)
 	
 	var value = INF
 	for move in moves:
-		board[move.row][move.col] = stoneInstance.instance()
-		board[move.row][move.col].row = move.row
-		board[move.row][move.col].col = move.col
-		board[move.row][move.col].sideUp = enemy_of(currentPlayer)
+		board[move.row][move.col] = add_stone_on_board(move.row, move.col, enemy_of(currentPlayer), board)
+		var flipStones = get_flipped_stones(move.row, move.col, enemy_of(currentPlayer), board)
 		
 		value = min(value, max_turn(board, depth + 1, alpha, beta))
 		beta = min(beta, value)
 		
 		board[move.row][move.col] = null
+		for stone in flipStones:
+			stone.sideUp = currentPlayer
 		
 		if alpha >= beta:
 			break

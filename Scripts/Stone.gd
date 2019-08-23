@@ -31,8 +31,4 @@ func flip():
 
 func finish_flip():
 	sideUp = get_parent().enemy_of(sideUp)
-	
-	if abs(int(get_rotation_degrees().x)) >= 360:
-		set_rotation_degrees(Vector3(abs(int(get_rotation_degrees().x)) - 360, 0, 0))
-	
 	flipped = true

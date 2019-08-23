@@ -22,7 +22,7 @@ surfaces/0 = {
 extents = Vector3( 0.437495, 0.00430329, 0.444263 )
 
 [node name="Legal Move" type="Area"]
-transform = Transform( 1.01, 0, 0, 0, 1, 0, 0, 0, 1.01, 0, 0, 0 )
+transform = Transform( 1.025, 0, 0, 0, 1, 0, 0, 0, 1.025, 0, 0.09, 0 )
 script = ExtResource( 1 )
 
 [node name="Model" type="MeshInstance" parent="."]

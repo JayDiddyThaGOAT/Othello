@@ -53,9 +53,12 @@ func run_player_move(camera, event, click_position, click_normal, shape_idx):
 			
 			for stone in flipStones:
 				stone.flip()
+			
+			get_node("CollisionShape").visible = false
 
 func run_ai_move():
 	board.place_stone(row, col, board.currentPlayer, board.gameBoard)
+	get_node("CollisionShape").visible = false
 	yield(get_tree().create_timer(AI.wait_time), "timeout")
 	visible = false
 	for stone in flipStones:
@@ -67,8 +70,9 @@ func _process(delta):
 			for stone in flipStones:
 				if not stone.flipped:
 					return
-			flipStones.clear()
+			
 			board.update_hud(board.enemy_of(board.currentPlayer))
+			flipStones.clear()
 			yield(board, "up_to_date")
 		else:
 			board.begin_turn()
