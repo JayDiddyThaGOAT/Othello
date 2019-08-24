@@ -1,10 +1,19 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Scenes/Board.tscn" type="PackedScene" id=1]
-[ext_resource path="res://Sprites/Space.png" type="Texture" id=2]
-[ext_resource path="res://Scenes/Stone.tscn" type="PackedScene" id=3]
-[ext_resource path="res://Fonts/ScoreNumber.tres" type="DynamicFont" id=4]
-[ext_resource path="res://Fonts/TurnSummary.tres" type="DynamicFont" id=5]
+[ext_resource path="res://Fonts/Fredericka_the_Great/FrederickatheGreat-Regular.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://Sprites/Space.png" type="Texture" id=3]
+[ext_resource path="res://Scenes/Stone.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Fonts/ScoreNumber.tres" type="DynamicFont" id=5]
+[ext_resource path="res://Fonts/TurnSummary.tres" type="DynamicFont" id=6]
+
+[sub_resource type="DynamicFont" id=1]
+size = 200
+font_data = ExtResource( 2 )
+
+[sub_resource type="DynamicFont" id=2]
+size = 100
+font_data = ExtResource( 2 )
 
 [node name="GamePlay" type="Spatial"]
 
@@ -14,132 +23,169 @@ light_indirect_energy = 0.0
 light_specular = 1.0
 
 [node name="Camera" type="Camera" parent="."]
-transform = Transform( 1, 0, 0, 0, 0.5, 0.866026, 0, -0.866026, 0.5, 0, 30, 15 )
+transform = Transform( 1, 0, 0, 0, 0.5, 0.866026, 0, -0.866026, 0.5, 0, 30, 14 )
 current = true
 fov = 31.0
 
 [node name="Board" parent="." instance=ExtResource( 1 )]
 
-[node name="Scores" type="HBoxContainer" parent="."]
-margin_top = 400.0
+[node name="NewGameButton" type="Button" parent="."]
+margin_left = 150.0
+margin_top = 100.0
+margin_right = 1316.0
+margin_bottom = 352.0
+custom_fonts/font = SubResource( 1 )
+custom_colors/font_color = Color( 1, 1, 0, 1 )
+text = "NEW GAME"
+
+[node name="Players" type="HBoxContainer" parent="."]
+margin_top = 500.0
 margin_right = 1440.0
-margin_bottom = 1013.0
+margin_bottom = 1249.0
 custom_constants/separation = 300
 alignment = 1
 
-[node name="Dark" type="VSplitContainer" parent="Scores"]
-editor/display_folded = true
+[node name="Dark" type="VSplitContainer" parent="Players"]
 margin_left = 70.0
 margin_right = 570.0
-margin_bottom = 713.0
+margin_bottom = 749.0
 
-[node name="Score" type="CenterContainer" parent="Scores/Dark"]
+[node name="Controller" type="Button" parent="Players/Dark"]
 margin_right = 500.0
-margin_bottom = 500.0
+margin_bottom = 129.0
+custom_fonts/font = SubResource( 2 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover = Color( 0, 0, 0, 1 )
+custom_colors/font_color_pressed = Color( 0, 0, 0, 1 )
+text = "PLAYER"
 
-[node name="Space" type="TextureRect" parent="Scores/Dark/Score"]
+[node name="Score" type="CenterContainer" parent="Players/Dark"]
+editor/display_folded = true
+margin_top = 141.0
 margin_right = 500.0
-margin_bottom = 500.0
-texture = ExtResource( 2 )
+margin_bottom = 749.0
 
-[node name="DiscContainer" type="ViewportContainer" parent="Scores/Dark/Score"]
+[node name="Space" type="TextureRect" parent="Players/Dark/Score"]
+margin_top = 54.0
+margin_right = 500.0
+margin_bottom = 554.0
+texture = ExtResource( 3 )
+
+[node name="DiscContainer" type="ViewportContainer" parent="Players/Dark/Score"]
 editor/display_folded = true
 margin_left = 30.0
-margin_top = 30.0
+margin_top = 84.0
 margin_right = 470.0
-margin_bottom = 470.0
+margin_bottom = 524.0
 
-[node name="DiscViewer" type="Viewport" parent="Scores/Dark/Score/DiscContainer"]
+[node name="DiscViewer" type="Viewport" parent="Players/Dark/Score/DiscContainer"]
 size = Vector2( 440, 440 )
 transparent_bg = true
 handle_input_locally = false
 render_target_update_mode = 3
 gui_disable_input = true
 
-[node name="Camera" type="Camera" parent="Scores/Dark/Score/DiscContainer/DiscViewer"]
+[node name="Camera" type="Camera" parent="Players/Dark/Score/DiscContainer/DiscViewer"]
 transform = Transform( 1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, -10, 3, 1.7 )
 keep_aspect = 0
 current = true
 fov = 16.0
 
-[node name="Stone" parent="Scores/Dark/Score/DiscContainer/DiscViewer" instance=ExtResource( 3 )]
+[node name="Stone" parent="Players/Dark/Score/DiscContainer/DiscViewer" instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 0 )
 script = null
 
-[node name="Number" type="Label" parent="Scores/Dark/Score"]
+[node name="Number" type="Label" parent="Players/Dark/Score"]
 margin_left = 250.0
-margin_top = 127.0
+margin_top = 181.0
 margin_right = 250.0
-margin_bottom = 373.0
-custom_fonts/font = ExtResource( 4 )
+margin_bottom = 427.0
+custom_fonts/font = ExtResource( 5 )
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 
-[node name="Turn Summary" type="Label" parent="Scores/Dark"]
-margin_top = 512.0
+[node name="Turn Summary" type="Label" parent="Players/Dark"]
+margin_top = 709.0
 margin_right = 500.0
-margin_bottom = 713.0
-custom_fonts/font = ExtResource( 5 )
+margin_bottom = 910.0
+custom_fonts/font = ExtResource( 6 )
 custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
 text = "
 "
 align = 1
 valign = 1
 clip_text = true
 
-[node name="Light" type="VSplitContainer" parent="Scores"]
+[node name="Light" type="VSplitContainer" parent="Players"]
 margin_left = 870.0
 margin_right = 1370.0
-margin_bottom = 713.0
+margin_bottom = 749.0
 
-[node name="Score" type="CenterContainer" parent="Scores/Light"]
+[node name="Controller" type="Button" parent="Players/Light"]
 margin_right = 500.0
-margin_bottom = 500.0
+margin_bottom = 129.0
+custom_fonts/font = SubResource( 2 )
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_colors/font_color_hover = Color( 1, 1, 1, 1 )
+custom_colors/font_color_pressed = Color( 1, 1, 1, 1 )
+text = "PLAYER"
 
-[node name="Space" type="TextureRect" parent="Scores/Light/Score"]
+[node name="Score" type="CenterContainer" parent="Players/Light"]
+editor/display_folded = true
+margin_top = 141.0
 margin_right = 500.0
-margin_bottom = 500.0
-texture = ExtResource( 2 )
+margin_bottom = 749.0
 
-[node name="DiscContainer" type="ViewportContainer" parent="Scores/Light/Score"]
+[node name="Space" type="TextureRect" parent="Players/Light/Score"]
+margin_top = 54.0
+margin_right = 500.0
+margin_bottom = 554.0
+texture = ExtResource( 3 )
+
+[node name="DiscContainer" type="ViewportContainer" parent="Players/Light/Score"]
 margin_left = 30.0
-margin_top = 30.0
+margin_top = 84.0
 margin_right = 470.0
-margin_bottom = 470.0
+margin_bottom = 524.0
 
-[node name="DiscViewer" type="Viewport" parent="Scores/Light/Score/DiscContainer"]
+[node name="DiscViewer" type="Viewport" parent="Players/Light/Score/DiscContainer"]
+editor/display_folded = true
 size = Vector2( 440, 440 )
 transparent_bg = true
 handle_input_locally = false
 render_target_update_mode = 3
 gui_disable_input = true
 
-[node name="Camera" type="Camera" parent="Scores/Light/Score/DiscContainer/DiscViewer"]
+[node name="Camera" type="Camera" parent="Players/Light/Score/DiscContainer/DiscViewer"]
 transform = Transform( 1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 10, 3, 1.7 )
 keep_aspect = 0
 current = true
 fov = 16.0
 
-[node name="Stone" parent="Scores/Light/Score/DiscContainer/DiscViewer" instance=ExtResource( 3 )]
+[node name="Stone" parent="Players/Light/Score/DiscContainer/DiscViewer" instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, -1, -8.74228e-08, 0, 8.74228e-08, -1, 10, 0, 0 )
 script = null
 
-[node name="Number" type="Label" parent="Scores/Light/Score"]
+[node name="Number" type="Label" parent="Players/Light/Score"]
 margin_left = 250.0
-margin_top = 127.0
+margin_top = 181.0
 margin_right = 250.0
-margin_bottom = 373.0
-custom_fonts/font = ExtResource( 4 )
+margin_bottom = 427.0
+custom_fonts/font = ExtResource( 5 )
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 0 )
 
-[node name="Turn Summary" type="Label" parent="Scores/Light"]
-margin_top = 512.0
+[node name="Turn Summary" type="Label" parent="Players/Light"]
+margin_top = 709.0
 margin_right = 500.0
-margin_bottom = 713.0
-custom_fonts/font = ExtResource( 5 )
+margin_bottom = 910.0
+custom_fonts/font = ExtResource( 6 )
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
 text = "
 "
 align = 1
 valign = 1
+[connection signal="button_up" from="NewGameButton" to="Board" method="restart_game"]
+[connection signal="button_up" from="Players/Dark/Controller" to="Board" method="change_dark_player_type"]
+[connection signal="button_up" from="Players/Light/Controller" to="Board" method="change_light_player_type"]

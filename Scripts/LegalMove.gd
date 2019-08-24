@@ -19,23 +19,6 @@ func _ready():
 	if not board.darkAI and not board.lightAI:
 		AI.queue_free()
 	
-	var flankDirections = board.neighbors_at(row, col, board.gameBoard)
-	for direction in flankDirections:
-		var stones = []
-		var stone = flankDirections[direction]
-		while stone != null and stone.sideUp == board.enemy_of(board.currentPlayer):
-			stones.append(stone)
-			var surroundingStones = board.neighbors_at(stone.row, stone.col, board.gameBoard)
-			if not surroundingStones.has(direction):
-				break
-				
-			stone = surroundingStones[direction]
-		
-		if stone != null and stone.sideUp == board.currentPlayer:
-			for stone in stones:
-				flipStones.append(stone)
-	
-	
 	material.albedo_color = Color(0, 0, 0, material.albedo_color.a + (flipStones.size() - 1) * 0.125)
 	model.set_surface_material(0, material)
 

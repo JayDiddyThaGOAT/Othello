@@ -7,7 +7,7 @@ const DIRECTIONS = ["NORTH", "SOUTH", "WEST", "EAST", "NORTHWEST", "NORTHEAST", 
 
 export var darkAI = false
 export var lightAI = true
-export var maxDepth = 2
+export var maxDepth = 1
 
 onready var stoneInstance = preload("res://Scenes/Stone.tscn")
 onready var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
@@ -15,8 +15,11 @@ onready var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
 onready var normSpaceTexture = preload("res://Sprites/Space.png")
 onready var darkSpaceTexture = preload("res://Sprites/DarkSpace.png")
 
-onready var darkScore = get_parent().get_node("Scores/Dark")
-onready var lightScore = get_parent().get_node("Scores/Light")
+onready var darkScore = get_parent().get_node("Players/Dark")
+onready var lightScore = get_parent().get_node("Players/Light")
+
+onready var darkController = darkScore.get_node("Controller")
+onready var lightController = lightScore.get_node("Controller")
 
 var gameBoard : Array = []
 
@@ -36,10 +39,23 @@ func _ready():
 	
 	randomize()
 	
+	
 	update_hud(currentPlayer)
+	if lightAI:
+		lightController.text = "CPU"
+	else:
+		lightController.text = "PLAYER"
+	
 	if darkAI:
+		darkController.text = "CPU"
 		yield(get_tree().create_timer(currentLegalMoves[0].get_node("AI").wait_time), "timeout")
+	else:
+		darkController.text = "PLAYER"
+	
 	begin_turn()
+
+func restart_game():
+	get_tree().reload_current_scene()
 	
 func up_next(nextPlayer : String, board : Array):
 	var nextEnemyLegalMoves = get_legal_moves_from(enemy_of(nextPlayer), board)
@@ -94,32 +110,25 @@ func update_hud(player : String):
 	currentLegalMoves = get_legal_moves_from(currentPlayer, gameBoard)
 	match currentPlayer:
 		"Dark":
+			darkController.disabled = true
+			lightController.disabled = false
+			
 			darkScore.get_node("Score/Space").texture = darkSpaceTexture
 			lightScore.get_node("Score/Space").texture = normSpaceTexture
 			
-			var playerType
-			if not darkAI:
-				playerType = "YOUR"
-			else:
-				playerType = "CPU"
-				
-			
-			if not repeatedTurn: darkScore.get_node("Turn Summary").text = playerType + " TURN\n"
-			else: darkScore.get_node("Turn Summary").text = playerType + " TURN\nAGAIN"
+			if not repeatedTurn: darkScore.get_node("Turn Summary").text = darkController.text + " GOES\n"
+			else: darkScore.get_node("Turn Summary").text = darkController.text + " GOES\nAGAIN"
 			
 			lightScore.get_node("Turn Summary").text = "\n"
 		"Light":
+			lightController.disabled = true
+			darkController.disabled = false
+			
 			lightScore.get_node("Score/Space").texture = darkSpaceTexture
 			darkScore.get_node("Score/Space").texture = normSpaceTexture
 			
-			var playerType
-			if not lightAI:
-				playerType = "YOUR"
-			else:
-				playerType = "CPU"
-			
-			if not repeatedTurn: lightScore.get_node("Turn Summary").text = playerType + " TURN\n"
-			else: lightScore.get_node("Turn Summary").text = playerType + " TURN\nAGAIN"
+			if not repeatedTurn: lightScore.get_node("Turn Summary").text = lightController.text + " GOES\n"
+			else: lightScore.get_node("Turn Summary").text = lightController.text + " GOES\nAGAIN"
 			
 			darkScore.get_node("Turn Summary").text = "\n"
 	
@@ -245,11 +254,12 @@ func neighbors_at(row : int, col : int, board : Array):
 	
 	return neighbors
 
-func create_legal_move(row : int, col : int):
+func create_legal_move(row : int, col : int, player : String, board : Array):
 	var legalMove = legalMoveInstance.instance()
 	legalMove.row = row
 	legalMove.col = col
-	legalMove.set_translation(Vector3(col - 3.5, legalMoveInstance.instance().get_translation().y, row - 3.5))
+	legalMove.flipStones = get_flipped_stones(row, col, player, board)
+	legalMove.set_translation(Vector3(col - 3.5, legalMove.get_translation().y, row - 3.5))
 	
 	return legalMove
 
@@ -299,7 +309,7 @@ func search_for_move_at(direction : String, rootStone : MeshInstance, board : Ar
 			currentStone = surroundingStonesAtCurrent[direction]
 		
 		if currentStone == null:
-			return create_legal_move(row, col)
+			return create_legal_move(row, col, rootStone.sideUp, board)
 
 func get_legal_moves_from(player : String, board):
 	var legalMoves = []
@@ -327,6 +337,7 @@ func place_legal_moves(legalMoves):
 
 func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
 	var moves = get_legal_moves_from(currentPlayer, board)
+	
 	if depth == maxDepth or moves.size() <= 0:
 		return calculate_score(currentPlayer, board)
 	
@@ -349,6 +360,7 @@ func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float
 	
 func min_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
 	var moves = get_legal_moves_from(enemy_of(currentPlayer), board)
+	
 	if depth == maxDepth or moves.size() <= 0:
 		return calculate_score(currentPlayer, board)
 	
@@ -387,5 +399,22 @@ func place_best_move(moves):
 			bestMove = move
 			bestValue = value
 	
+	
 	add_child(bestMove)
 	return bestMove
+
+func change_dark_player_type():
+	darkAI = not darkAI
+	match darkController.text:
+		"PLAYER":
+			darkController.text = "CPU"
+		"CPU":
+			darkController.text = "PLAYER"
+
+func change_light_player_type():
+	lightAI = not lightAI
+	match lightController.text:
+		"PLAYER":
+			lightController.text = "CPU"
+		"CPU":
+			lightController.text = "PLAYER"
