@@ -1,11 +1,12 @@
 extends Area
 
+onready var globals = get_tree().get_root().get_node("/root/globals")
+
 onready var board = get_parent()
+onready var AI = get_node("AI")
 
 onready var model = get_node("Model")
 onready var material = model.mesh.surface_get_material(0).duplicate()
-
-onready var AI = get_node("AI")
 
 var row : int
 var col : int
@@ -16,7 +17,7 @@ func to_string():
 	return String(row) + "" + String(col)
 
 func _ready():
-	if not board.darkAI and not board.lightAI:
+	if not globals.darkAI and not globals.lightAI:
 		AI.queue_free()
 	
 	material.albedo_color = Color(0, 0, 0, material.albedo_color.a + (flipStones.size() - 1) * 0.125)
@@ -24,7 +25,7 @@ func _ready():
 
 func run_player_move(camera, event, click_position, click_normal, shape_idx):
 	if event is InputEventMouseButton:
-		if board.currentPlayer == "Dark" and not board.darkAI or board.currentPlayer == "Light" and not board.lightAI:
+		if board.currentPlayer == "Dark" and not globals.darkAI or board.currentPlayer == "Light" and not globals.lightAI:
 			board.place_stone(row, col, board.currentPlayer, board.gameBoard)
 			
 			for move in board.get_children():
