@@ -231,4 +231,4 @@ custom_colors/font_color_hover = Color( 1, 1, 0, 1 )
 custom_colors/font_color_pressed = Color( 1, 1, 0, 1 )
 text = " MAIN MENU"
 [connection signal="button_up" from="NewGameButton" to="Board" method="restart_game"]
-[connection signal="pressed" from="MainMenuButton" to="Board" method="go_back_to_main_menu"]
+[connection signal="button_up" from="MainMenuButton" to="Board" method="go_back_to_main_menu"]
