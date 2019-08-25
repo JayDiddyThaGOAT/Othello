@@ -7,12 +7,6 @@ const DIRECTIONS = ["NORTH", "SOUTH", "WEST", "EAST", "NORTHWEST", "NORTHEAST", 
 
 onready var globals = get_tree().get_root().get_node("/root/globals")
 
-onready var stoneInstance = preload("res://Scenes/Stone.tscn")
-onready var legalMoveInstance = preload("res://Scenes/LegalMove.tscn")
-
-onready var normSpaceTexture = preload("res://Sprites/Space.png")
-onready var darkSpaceTexture = preload("res://Sprites/DarkSpace.png")
-
 onready var darkScore = get_parent().get_node("Players/Dark")
 onready var lightScore = get_parent().get_node("Players/Light")
 
@@ -56,6 +50,9 @@ func _ready():
 
 func restart_game():
 	get_tree().reload_current_scene()
+
+func go_back_to_main_menu():
+	get_tree().change_scene_to(globals.mainMenu)
 	
 func up_next(nextPlayer : String, board : Array):
 	var nextEnemyLegalMoves = get_legal_moves_from(enemy_of(nextPlayer), board)
@@ -79,24 +76,24 @@ func update_hud(player : String):
 	if nextPlayer == null:
 		match get_winner_from(gameBoard):
 			"Dark":
-				darkScore.get_node("Score/Space").texture = darkSpaceTexture
-				lightScore.get_node("Score/Space").texture = normSpaceTexture
+				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
+				lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
 				
 				darkScore.get_node("Score/Number").text = String(count_all_stones("Dark", gameBoard) + count_all_stones("", gameBoard))
 				
 				darkScore.get_node("Turn Summary").text = "WINNER\n"
 				lightScore.get_node("Turn Summary").text = "LOSER\n"
 			"Light":
-				lightScore.get_node("Score/Space").texture = darkSpaceTexture
-				darkScore.get_node("Score/Space").texture = normSpaceTexture
+				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
+				darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
 				
 				lightScore.get_node("Score/Number").text = String(count_all_stones("Light", gameBoard) + count_all_stones("", gameBoard))
 				
 				lightScore.get_node("Turn Summary").text = "WINNER\n"
 				darkScore.get_node("Turn Summary").text = "LOSER\n"
 			"Tie":
-				darkScore.get_node("Score/Space").texture = darkSpaceTexture
-				lightScore.get_node("Score/Space").texture = darkSpaceTexture
+				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
+				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				
 				darkScore.get_node("Score/Number").text = String(count_all_stones("Dark", gameBoard) + count_all_stones("", gameBoard))
 				lightScore.get_node("Score/Number").text = String(count_all_stones("Light", gameBoard) + count_all_stones("", gameBoard))
@@ -110,16 +107,16 @@ func update_hud(player : String):
 	currentLegalMoves = get_legal_moves_from(currentPlayer, gameBoard)
 	match currentPlayer:
 		"Dark":
-			darkScore.get_node("Score/Space").texture = darkSpaceTexture
-			lightScore.get_node("Score/Space").texture = normSpaceTexture
+			darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
+			lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
 			
 			if not repeatedTurn: darkScore.get_node("Turn Summary").text = darkController.text + " GOES\n"
 			else: darkScore.get_node("Turn Summary").text = darkController.text + " GOES\nAGAIN"
 			
 			lightScore.get_node("Turn Summary").text = "\n"
 		"Light":
-			lightScore.get_node("Score/Space").texture = darkSpaceTexture
-			darkScore.get_node("Score/Space").texture = normSpaceTexture
+			lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
+			darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
 			
 			if not repeatedTurn: lightScore.get_node("Turn Summary").text = lightController.text + " GOES\n"
 			else: lightScore.get_node("Turn Summary").text = lightController.text + " GOES\nAGAIN"
@@ -305,7 +302,7 @@ func get_winner_from(board):
 		return "Tie"
 
 func add_stone_on_board(row : int, col : int, sideUp : String, board : Array):
-	board[row][col] = stoneInstance.instance()
+	board[row][col] = globals.stone.instance()
 	board[row][col].row = row
 	board[row][col].col = col
 	board[row][col].sideUp = sideUp
@@ -357,7 +354,7 @@ func neighbors_at(row : int, col : int, board : Array):
 	return neighbors
 
 func create_legal_move(row : int, col : int, player : String, board : Array):
-	var legalMove = legalMoveInstance.instance()
+	var legalMove = globals.legalMove.instance()
 	legalMove.row = row
 	legalMove.col = col
 	legalMove.flipStones = get_flipped_stones(row, col, player, board)

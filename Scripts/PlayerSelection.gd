@@ -2,8 +2,6 @@ extends HBoxContainer
 
 onready var globals = get_tree().get_root().get_node("/root/globals")
 
-onready var gamePlay = preload("res://Scenes/GamePlay.tscn")
-
 onready var darkController = get_node("Dark/Controller")
 onready var lightController = get_node("Light/Controller")
 
@@ -26,8 +24,8 @@ func _ready():
 	else:
 		lightController.text = "PLAYER"
 	
-	darkSelectionDirection.text = "TAP BUTTON\nFOR\n" + opposite_of(darkController.text)
-	lightSelectionDirection.text = "TAP BUTTON\nFOR\n" + opposite_of(lightController.text)
+	darkSelectionDirection.text = "TAP FOR\n" + opposite_of(darkController.text)
+	lightSelectionDirection.text = "TAP FOR\n" + opposite_of(lightController.text)
 	
 func change_dark_controller():
 	match darkController.text:
@@ -38,7 +36,7 @@ func change_dark_controller():
 			darkController.text = "PLAYER"
 			globals.darkAI = false
 	
-	darkSelectionDirection.text = "TAP BUTTON\nFOR\n" + opposite_of(darkController.text)
+	darkSelectionDirection.text = "TAP FOR\n" + opposite_of(darkController.text)
 
 func change_light_controller():
 	match lightController.text:
@@ -49,7 +47,7 @@ func change_light_controller():
 			lightController.text = "PLAYER"
 			globals.lightAI = false
 	
-	lightSelectionDirection.text = "TAP BUTTON\nFOR\n" + opposite_of(lightController.text)
+	lightSelectionDirection.text = "TAP FOR\n" + opposite_of(lightController.text)
 
 func play_game():
-	get_tree().change_scene_to(gamePlay)
+	get_tree().change_scene_to(globals.gamePlay)

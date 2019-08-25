@@ -101,9 +101,10 @@ material/1 = null
 material/2 = null
 
 [node name="Camera" type="Camera" parent="Board"]
-transform = Transform( 1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 30, 12 )
+transform = Transform( 1, 0, 0, 0, 0.996195, 0.0871557, 0, -0.0871557, 0.996195, 0, 0.8, 2 )
 current = true
-fov = 50.0
+fov = 110.0
+size = 18.0
 
 [node name="Black Stone" parent="Board" instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.5 )
@@ -132,7 +133,6 @@ rect_scale = Vector2( 0.95, 0.95 )
 texture = ExtResource( 5 )
 
 [node name="Players" type="HBoxContainer" parent="."]
-editor/display_folded = true
 margin_top = 500.0
 margin_right = 1440.0
 margin_bottom = 1249.0
@@ -145,7 +145,6 @@ transform = Transform( 1, 0, 0, 0, -0.422618, 0.906308, 0, -0.906308, -0.422618,
 light_energy = 2.0
 
 [node name="Dark" type="VSplitContainer" parent="Players"]
-editor/display_folded = true
 margin_left = 70.0
 margin_right = 570.0
 margin_bottom = 749.0
@@ -160,7 +159,6 @@ custom_colors/font_color_pressed = Color( 0, 0, 0, 1 )
 text = "PLAYER"
 
 [node name="Score" type="CenterContainer" parent="Players/Dark"]
-editor/display_folded = true
 margin_top = 141.0
 margin_right = 500.0
 margin_bottom = 749.0
@@ -209,19 +207,16 @@ custom_colors/font_color = Color( 1, 1, 1, 1 )
 [node name="Selection Direction" type="Label" parent="Players/Dark"]
 margin_top = 709.0
 margin_right = 500.0
-margin_bottom = 910.0
+margin_bottom = 958.0
 custom_fonts/font = ExtResource( 12 )
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
-text = "TAP BUTTON
-FOR 
+text = "TAP FOR 
 CPU"
 align = 1
 valign = 1
-clip_text = true
 
 [node name="Light" type="VSplitContainer" parent="Players"]
-editor/display_folded = true
 margin_left = 870.0
 margin_right = 1370.0
 margin_bottom = 749.0
@@ -284,11 +279,10 @@ custom_colors/font_outline_modulate = Color( 0, 0, 0, 0 )
 [node name="Selection Direction" type="Label" parent="Players/Light"]
 margin_top = 709.0
 margin_right = 500.0
-margin_bottom = 910.0
+margin_bottom = 958.0
 custom_fonts/font = ExtResource( 12 )
 custom_colors/font_color = Color( 1, 1, 1, 1 )
-text = "TAP BUTTON
-FOR
+text = "TAP FOR 
 CPU"
 align = 1
 valign = 1
