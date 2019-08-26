@@ -169,14 +169,13 @@ margin_right = 500.0
 margin_bottom = 554.0
 texture = ExtResource( 8 )
 
-[node name="DiscContainer" type="ViewportContainer" parent="Players/Dark/Score"]
-editor/display_folded = true
+[node name="StoneContainer" type="ViewportContainer" parent="Players/Dark/Score"]
 margin_left = 30.0
 margin_top = 84.0
 margin_right = 470.0
 margin_bottom = 524.0
 
-[node name="DiscViewer" type="Viewport" parent="Players/Dark/Score/DiscContainer"]
+[node name="StoneViewer" type="Viewport" parent="Players/Dark/Score/StoneContainer"]
 editor/display_folded = true
 size = Vector2( 440, 440 )
 transparent_bg = true
@@ -184,13 +183,13 @@ handle_input_locally = false
 render_target_update_mode = 3
 gui_disable_input = true
 
-[node name="Camera" type="Camera" parent="Players/Dark/Score/DiscContainer/DiscViewer"]
+[node name="Camera" type="Camera" parent="Players/Dark/Score/StoneContainer/StoneViewer"]
 transform = Transform( 1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, -10, 3, 1.7 )
 keep_aspect = 0
 current = true
 fov = 16.0
 
-[node name="Stone" parent="Players/Dark/Score/DiscContainer/DiscViewer" instance=ExtResource( 4 )]
+[node name="Stone" parent="Players/Dark/Score/StoneContainer/StoneViewer" instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 0 )
 mesh = SubResource( 2 )
 flipHeight = null
@@ -232,7 +231,6 @@ text = "PLAYER"
 script = SubResource( 3 )
 
 [node name="Score" type="CenterContainer" parent="Players/Light"]
-editor/display_folded = true
 margin_top = 141.0
 margin_right = 500.0
 margin_bottom = 749.0
@@ -243,27 +241,26 @@ margin_right = 500.0
 margin_bottom = 554.0
 texture = ExtResource( 8 )
 
-[node name="DiscContainer" type="ViewportContainer" parent="Players/Light/Score"]
-editor/display_folded = true
+[node name="StoneContainer" type="ViewportContainer" parent="Players/Light/Score"]
 margin_left = 30.0
 margin_top = 84.0
 margin_right = 470.0
 margin_bottom = 524.0
 
-[node name="DiscViewer" type="Viewport" parent="Players/Light/Score/DiscContainer"]
+[node name="StoneViewer" type="Viewport" parent="Players/Light/Score/StoneContainer"]
 size = Vector2( 440, 440 )
 transparent_bg = true
 handle_input_locally = false
 render_target_update_mode = 3
 gui_disable_input = true
 
-[node name="Camera" type="Camera" parent="Players/Light/Score/DiscContainer/DiscViewer"]
+[node name="Camera" type="Camera" parent="Players/Light/Score/StoneContainer/StoneViewer"]
 transform = Transform( 1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 10, 3, 1.7 )
 keep_aspect = 0
 current = true
 fov = 16.0
 
-[node name="Stone" parent="Players/Light/Score/DiscContainer/DiscViewer" instance=ExtResource( 4 )]
+[node name="Stone" parent="Players/Light/Score/StoneContainer/StoneViewer" instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, -1, -8.74228e-08, 0, 8.74228e-08, -1, 10, 0, 0 )
 mesh = SubResource( 2 )
 
