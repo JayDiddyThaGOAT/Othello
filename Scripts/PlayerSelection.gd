@@ -1,70 +1,103 @@
 extends HBoxContainer
 
-onready var globals = get_tree().get_root().get_node("/root/globals")
-
 onready var darkController = get_node("Dark/Controller")
 onready var lightController = get_node("Light/Controller")
 
-onready var darkStoneViewer = get_node("Dark/Score/StoneContainer/StoneViewer")
-onready var lightStoneViewer = get_node("Light/Score/StoneContainer/StoneViewer")
+onready var darkDifficultyOptions = get_node("Dark/AI Difficulty/Options")
+onready var lightDifficultyOptions = get_node("Light/AI Difficulty/Options")
 
-onready var darkSelectionDirection = get_node("Dark/Selection Direction")
-onready var lightSelectionDirection = get_node("Light/Selection Direction")
+onready var darkPlayerOptions = darkController.get_node("Options")
+onready var lightPlayerOptions = lightController.get_node("Options")
 
-func opposite_of(controller : String):
-	match controller:
-		"PLAYER": return "CPU"
-		"CPU": return "PLAYER"
+onready var darkSlider = darkController.get_node("Slider")
+onready var lightSlider = lightController.get_node("Slider")
+
+onready var darkDifficultySilder = darkDifficultyOptions.get_parent().get_node("Slider")
+onready var lightDifficultySlider = lightDifficultyOptions.get_parent().get_node("Slider")
+
+
+var dark = Color(0, 0, 0)
+var light = Color(1, 1, 1)
 
 func _ready():
 	if globals.darkAI:
-		darkController.text = "CPU"
+		update_dark_player(1)
 	else:
-		darkController.text = "PLAYER"
+		update_light_player(0)
 	
 	if globals.lightAI:
-		lightController.text = "CPU"
+		update_light_player(1)
 	else:
-		lightController.text = "PLAYER"
+		update_light_player(0)
 	
-	darkSelectionDirection.text = "TAP FOR\n" + opposite_of(darkController.text)
-	lightSelectionDirection.text = "TAP FOR\n" + opposite_of(lightController.text)
-	
-	darkStoneViewer.set_clear_mode(Viewport.CLEAR_MODE_ONLY_NEXT_FRAME)
-	lightStoneViewer.set_clear_mode(Viewport.CLEAR_MODE_ONLY_NEXT_FRAME)
-	yield(get_tree(), "idle_frame")
-	yield(get_tree(), "idle_frame")
-	
-	var darkStoneImage = darkStoneViewer.get_texture().get_data()
-	var lightStoneImage = lightStoneViewer.get_texture().get_data()
-	
-	darkStoneImage.flip_y()
-	lightStoneImage.flip_y()
-	
-	darkStoneImage.save_png("res://Sprites/DarkStone.png")
-	lightStoneImage.save_png("res://Sprites/LightStone.png")
-	
-func change_dark_controller():
-	match darkController.text:
-		"PLAYER":
-			darkController.text = "CPU"
-			globals.darkAI = true
-		"CPU": 
-			darkController.text = "PLAYER"
-			globals.darkAI = false
-	
-	darkSelectionDirection.text = "TAP FOR\n" + opposite_of(darkController.text)
+	update_dark_difficulty(globals.darkDifficulty)
+	update_light_difficulty(globals.lightDifficulty)
 
-func change_light_controller():
-	match lightController.text:
-		"PLAYER": 
-			lightController.text = "CPU"
-			globals.lightAI = true
-		"CPU": 
-			lightController.text = "PLAYER"
-			globals.lightAI = false
+func update_dark_player(to : int):
+	if to == 0:
+		globals.darkAI = false
+		darkDifficultyOptions.get_parent().visible = false
+		
+		darkPlayerOptions.get_node("Player").add_color_override("font_color", dark)
+		darkPlayerOptions.get_node("CPU").add_color_override("font_color", light)
+	elif to == 1:
+		globals.darkAI = true
+		darkDifficultyOptions.get_parent().visible = true
+		darkPlayerOptions.get_node("Player").add_color_override("font_color", light)
+		darkPlayerOptions.get_node("CPU").add_color_override("font_color", dark)
 	
-	lightSelectionDirection.text = "TAP FOR\n" + opposite_of(lightController.text)
+	darkSlider.value = to
+
+func update_light_player(to : int):
+	if to == 0:
+		globals.lightAI = false
+		lightDifficultyOptions.get_parent().visible = false
+		
+		lightPlayerOptions.get_node("Player").add_color_override("font_color", light)
+		lightPlayerOptions.get_node("CPU").add_color_override("font_color", dark)
+	elif to == 1:
+		globals.lightAI = true
+		lightDifficultyOptions.get_parent().visible = true
+		
+		lightPlayerOptions.get_node("Player").add_color_override("font_color", dark)
+		lightPlayerOptions.get_node("CPU").add_color_override("font_color", light)
+	
+	lightSlider.value = to
+
+func update_dark_difficulty(to : int):
+	if to == 1:
+		darkDifficultyOptions.get_node("Easy").add_color_override("font_color", dark)
+		darkDifficultyOptions.get_node("Normal").add_color_override("font_color", light)
+		darkDifficultyOptions.get_node("Hard").add_color_override("font_color", light)
+	elif to == 2:
+		darkDifficultyOptions.get_node("Easy").add_color_override("font_color", light)
+		darkDifficultyOptions.get_node("Normal").add_color_override("font_color", dark)
+		darkDifficultyOptions.get_node("Hard").add_color_override("font_color", light)
+	elif to == 3:
+		darkDifficultyOptions.get_node("Easy").add_color_override("font_color", light)
+		darkDifficultyOptions.get_node("Normal").add_color_override("font_color", light)
+		darkDifficultyOptions.get_node("Hard").add_color_override("font_color", dark)
+	
+	darkDifficultySilder.value = to
+	globals.darkDifficulty = to
+
+
+func update_light_difficulty(to : int):
+	if to == 1:
+		lightDifficultyOptions.get_node("Easy").add_color_override("font_color", light)
+		lightDifficultyOptions.get_node("Normal").add_color_override("font_color", dark)
+		lightDifficultyOptions.get_node("Hard").add_color_override("font_color", dark)
+	elif to == 2:
+		lightDifficultyOptions.get_node("Easy").add_color_override("font_color", dark)
+		lightDifficultyOptions.get_node("Normal").add_color_override("font_color", light)
+		lightDifficultyOptions.get_node("Hard").add_color_override("font_color", dark)
+	elif to == 3:
+		lightDifficultyOptions.get_node("Easy").add_color_override("font_color", dark)
+		lightDifficultyOptions.get_node("Normal").add_color_override("font_color", dark)
+		lightDifficultyOptions.get_node("Hard").add_color_override("font_color", light)
+	
+	lightDifficultySlider.value = to
+	globals.lightDifficulty = to
 
 func play_game():
 	get_tree().change_scene_to(globals.gamePlay)

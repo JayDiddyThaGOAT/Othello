@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/Icon.svg-56d8f8ebcf1c78ba1c45cd8d22b247ad.stex"
+path="res://.import/LightGrabber.png-8e5d2660ec44e768010a245854afa607.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Sprites/Icon.svg"
-dest_files=[ "res://.import/Icon.svg-56d8f8ebcf1c78ba1c45cd8d22b247ad.stex" ]
+source_file="res://Sprites/LightGrabber.png"
+dest_files=[ "res://.import/LightGrabber.png-8e5d2660ec44e768010a245854afa607.stex" ]
 
 [params]
 

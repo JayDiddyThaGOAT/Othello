@@ -9,7 +9,7 @@ var row : int
 var col : int
 var sideUp: String
 
-var flipped = false
+var flipped : bool = false
 
 func to_string():
 	return String(row) + "" + String(col) + "\t" + sideUp
