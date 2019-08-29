@@ -142,10 +142,9 @@ func begin_turn():
 	if currentPlayer == "Dark" and not globals.darkAI or currentPlayer == "Light" and not globals.lightAI:
 		place_legal_moves(currentLegalMoves)
 	else:
-		if currentPlayer == "Dark" and globals.darkDifficulty < -1 or currentPlayer == "Light" and globals.lightDifficulty < -1:
-			place_best_move(currentLegalMoves).AI.start()
-		else:
-			place_move_with_most_flipped_stones(currentLegalMoves).AI.start()
+		var move = place_move_with_most_stones(currentLegalMoves)
+		if move != null:
+			move.AI.start()
 
 func enemy_of(player : String):
 	match player:
@@ -327,7 +326,7 @@ func place_legal_moves(legalMoves):
 	for move in legalMoves:
 		add_child(move)
 
-func evaulate(board : Array, player : String):
+func evaulate(board : Array):
 	var playerStones : int = 0
 	var enemyStones : int = 0
 	for row in range(SIZE):
@@ -336,29 +335,29 @@ func evaulate(board : Array, player : String):
 			if stone == null:
 				continue
 			
-			if stone.sideUp == player: playerStones += 1
-			elif stone.sideUp == enemy_of(player): enemyStones += 1
+			if stone.sideUp == currentPlayer: playerStones += 1
+			elif stone.sideUp == enemy_of(currentPlayer): enemyStones += 1
 	
 	var difference = 100 * (playerStones - enemyStones) / (playerStones + enemyStones)
 	
 	var playerCorners : int = 0
 	var enemyCorners : int = 0
 	if board[0][0] != null:
-		if board[0][0].sideUp == player: playerCorners += 1
-		elif board[0][0].sideUp == enemy_of(player): enemyCorners += 1
+		if board[0][0].sideUp == currentPlayer: playerCorners += 1
+		elif board[0][0].sideUp == enemy_of(currentPlayer): enemyCorners += 1
 	if board[0][SIZE - 1] != null:
-		if board[0][SIZE - 1].sideUp == player: playerCorners += 1
-		elif board[0][SIZE - 1].sideUp == enemy_of(player): enemyCorners += 1
+		if board[0][SIZE - 1].sideUp == currentPlayer: playerCorners += 1
+		elif board[0][SIZE - 1].sideUp == enemy_of(currentPlayer): enemyCorners += 1
 	if board[SIZE - 1][0] != null:
-		if board[SIZE - 1][0].sideUp == player: playerCorners += 1
-		elif board[SIZE - 1][0].sideUp == enemy_of(player): enemyCorners += 1
+		if board[SIZE - 1][0].sideUp == currentPlayer: playerCorners += 1
+		elif board[SIZE - 1][0].sideUp == enemy_of(currentPlayer): enemyCorners += 1
 	if board[SIZE - 1][SIZE - 1] != null:
-		if board[SIZE - 1][SIZE - 1].sideUp == player: playerCorners += 1
-		elif board[SIZE - 1][SIZE - 1].sideUp == enemy_of(player): enemyCorners += 1
+		if board[SIZE - 1][SIZE - 1].sideUp == currentPlayer: playerCorners += 1
+		elif board[SIZE - 1][SIZE - 1].sideUp == enemy_of(currentPlayer): enemyCorners += 1
 	
 	var mobility : int = 0
-	var playerMobility : int = get_legal_moves_from(player, board).size()
-	var enemyMobility : int = get_legal_moves_from(enemy_of(player), board).size()
+	var playerMobility : int = get_legal_moves_from(currentPlayer, board).size()
+	var enemyMobility : int = get_legal_moves_from(enemy_of(currentPlayer), board).size()
 	mobility = 100 * (playerMobility - enemyMobility) / (playerMobility + enemyMobility + 1)
 	
 	var corners : int = 0
@@ -367,7 +366,7 @@ func evaulate(board : Array, player : String):
 	else:
 		corners = 100 * (playerCorners - enemyCorners) / (playerCorners + enemyCorners)
 	
-	return (0.01 * difference) * mobility + (100 * corners)
+	return (0.01 * difference) + mobility + (100 * corners)
 	
 
 func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
@@ -378,7 +377,7 @@ func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float
 	
 	var legalMoves = get_legal_moves_from(currentPlayer, board)
 	if depth == targetDepth or legalMoves.size() <= 0:
-		return evaulate(board, currentPlayer)
+		return evaulate(board)
 	
 	var value : float = -INF
 	for move in legalMoves:
@@ -407,7 +406,7 @@ func min_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float
 	
 	var legalMoves = get_legal_moves_from(enemy_of(currentPlayer), board)
 	if depth == targetDepth or legalMoves.size() <= 0:
-		return evaulate(board, enemy_of(currentPlayer))
+		return evaulate(board)
 	
 	var value : float = INF
 	for move in legalMoves:
@@ -428,20 +427,40 @@ func min_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float
 		
 	return value
 
-func place_move_with_most_flipped_stones(moves):
+func place_move_with_most_stones(moves):
 	var bestMove : Area
-	var mostFlipStones : int = 0
+	var bestValue : float = -INF
 	for move in moves:
-		var flipStones = get_flipped_stones(move.row, move.col, currentPlayer, gameBoard).size()
-		if flipStones > mostFlipStones:
-			mostFlipStones = flipStones
+		var moveStone = add_stone_on_board(move.row, move.col, currentPlayer, gameBoard)
+		var flipStones = get_flipped_stones(move.row, move.col, currentPlayer, gameBoard)
+		for stone in flipStones:
+			stone.sideUp = currentPlayer
+		
+		var playerStones : int = 0
+		var enemyStones : int = 0
+		for row in range(SIZE):
+			for col in range(SIZE):
+				var stone = gameBoard[row][col]
+				if stone == null:
+					continue
+				
+				if stone.sideUp == currentPlayer: playerStones += 1
+				elif stone.sideUp == enemy_of(currentPlayer): enemyStones += 1
+		
+		var value = float(playerStones - enemyStones)
+		if value > bestValue:
 			bestMove = move
+			bestValue = value
+		
+		gameBoard[move.row][move.col] = null
+		for stone in flipStones:
+			stone.sideUp = enemy_of(currentPlayer)
 		
 	add_child(bestMove)
 	return bestMove
 	
 func place_best_move(moves):
-	var bestMove = moves[0]
+	var bestMove : Area
 	var bestValue : float = -INF
 	for move in moves:
 		var moveStone = add_stone_on_board(move.row, move.col, currentPlayer, gameBoard)
