@@ -87,7 +87,7 @@ func update_hud(player : String):
 	var nextPlayer = up_next(enemy_of(player), gameBoard)
 	
 	if nextPlayer == null:
-		match get_winner_from(gameBoard):
+		match get_player_with_most_discs(gameBoard):
 			"Dark":
 				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
@@ -142,15 +142,17 @@ func begin_turn():
 	if currentPlayer == "Dark" and not globals.darkAI or currentPlayer == "Light" and not globals.lightAI:
 		place_legal_moves(currentLegalMoves)
 	else:
-		var bestMove = place_best_move(currentLegalMoves)
-		bestMove.AI.start()
+		if currentPlayer == "Dark" and globals.darkDifficulty < -1 or currentPlayer == "Light" and globals.lightDifficulty < -1:
+			place_best_move(currentLegalMoves).AI.start()
+		else:
+			place_move_with_most_flipped_stones(currentLegalMoves).AI.start()
 
 func enemy_of(player : String):
 	match player:
 		"Dark" : return "Light"
 		"Light": return "Dark"
 
-func get_winner_from(board):
+func get_player_with_most_discs(board):
 	var darkCount : int = 0
 	var lightCount : int = 0
 	
@@ -198,7 +200,7 @@ func get_flipped_stones(row : int, col : int, sideUp : String, board : Array):
 	
 	return flipStones
 
-func is_stone_stable(row : int, col : int, board : Array):
+func is_stable(row : int, col : int, board : Array):
 	if row == 0:
 		if col == 0 or col == 1 or col == SIZE - 1 or col == SIZE - 2:
 			return board[row][col] != null
@@ -212,10 +214,10 @@ func is_stone_stable(row : int, col : int, board : Array):
 		if col == 0 or col == 1 or col == SIZE - 1 or col == SIZE - 2:
 			return board[row][col] != null
 	
-	var verticalCheck = is_stone_stable(row - 1, col, board) and is_stone_stable(row + 1, col, board)
-	var horizontalCheck = is_stone_stable(row, col - 1, board) and is_stone_stable(row, col + 1, board)
-	var ascendingDiagonalCheck = is_stone_stable(row - 1, col + 1, board) and is_stone_stable(row + 1, col - 1, board)
-	var descendingDigonalCheck = is_stone_stable(row - 1, col - 1, board) and is_stone_stable(row + 1, col + 1, board)
+	var verticalCheck = is_stable(row - 1, col, board) and is_stable(row + 1, col, board)
+	var horizontalCheck = is_stable(row, col - 1, board) and is_stable(row, col + 1, board)
+	var ascendingDiagonalCheck = is_stable(row - 1, col + 1, board) and is_stable(row + 1, col - 1, board)
+	var descendingDigonalCheck = is_stable(row - 1, col - 1, board) and is_stable(row + 1, col + 1, board)
 	
 	return verticalCheck and horizontalCheck and ascendingDiagonalCheck and descendingDigonalCheck
 	
@@ -325,7 +327,136 @@ func place_legal_moves(legalMoves):
 	for move in legalMoves:
 		add_child(move)
 
+func evaulate(board : Array, player : String):
+	var playerStones : int = 0
+	var enemyStones : int = 0
+	for row in range(SIZE):
+		for col in range(SIZE):
+			var stone = board[row][col]
+			if stone == null:
+				continue
+			
+			if stone.sideUp == player: playerStones += 1
+			elif stone.sideUp == enemy_of(player): enemyStones += 1
+	
+	var difference = 100 * (playerStones - enemyStones) / (playerStones + enemyStones)
+	
+	var playerCorners : int = 0
+	var enemyCorners : int = 0
+	if board[0][0] != null:
+		if board[0][0].sideUp == player: playerCorners += 1
+		elif board[0][0].sideUp == enemy_of(player): enemyCorners += 1
+	if board[0][SIZE - 1] != null:
+		if board[0][SIZE - 1].sideUp == player: playerCorners += 1
+		elif board[0][SIZE - 1].sideUp == enemy_of(player): enemyCorners += 1
+	if board[SIZE - 1][0] != null:
+		if board[SIZE - 1][0].sideUp == player: playerCorners += 1
+		elif board[SIZE - 1][0].sideUp == enemy_of(player): enemyCorners += 1
+	if board[SIZE - 1][SIZE - 1] != null:
+		if board[SIZE - 1][SIZE - 1].sideUp == player: playerCorners += 1
+		elif board[SIZE - 1][SIZE - 1].sideUp == enemy_of(player): enemyCorners += 1
+	
+	var mobility : int = 0
+	var playerMobility : int = get_legal_moves_from(player, board).size()
+	var enemyMobility : int = get_legal_moves_from(enemy_of(player), board).size()
+	mobility = 100 * (playerMobility - enemyMobility) / (playerMobility + enemyMobility + 1)
+	
+	var corners : int = 0
+	if playerCorners + enemyCorners == 0:
+		corners = 0
+	else:
+		corners = 100 * (playerCorners - enemyCorners) / (playerCorners + enemyCorners)
+	
+	return (0.01 * difference) * mobility + (100 * corners)
+	
+
+func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
+	var targetDepth : int
+	match currentPlayer:
+		"Dark": targetDepth = globals.darkDifficulty
+		"Light": targetDepth = globals.lightDifficulty
+	
+	var legalMoves = get_legal_moves_from(currentPlayer, board)
+	if depth == targetDepth or legalMoves.size() <= 0:
+		return evaulate(board, currentPlayer)
+	
+	var value : float = -INF
+	for move in legalMoves:
+		var moveStone = add_stone_on_board(move.row, move.col, currentPlayer, board)
+		var flipStones = get_flipped_stones(move.row, move.col, currentPlayer, board)
+		for stone in flipStones:
+			stone.sideUp = currentPlayer
+		
+		value = max(value, min_turn(board, depth + 1, alpha, beta))
+		alpha = max(alpha, value)
+		
+		board[move.row][move.col] = null
+		for stone in flipStones:
+			stone.sideUp = enemy_of(currentPlayer)
+		
+		if alpha >= beta:
+			break
+		
+	return value
+
+func min_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
+	var targetDepth : int
+	match currentPlayer:
+		"Dark": targetDepth = globals.darkDifficulty
+		"Light": targetDepth = globals.lightDifficulty
+	
+	var legalMoves = get_legal_moves_from(enemy_of(currentPlayer), board)
+	if depth == targetDepth or legalMoves.size() <= 0:
+		return evaulate(board, enemy_of(currentPlayer))
+	
+	var value : float = INF
+	for move in legalMoves:
+		var moveStone = add_stone_on_board(move.row, move.col, enemy_of(currentPlayer), board)
+		var flipStones = get_flipped_stones(move.row, move.col, enemy_of(currentPlayer), board)
+		for stone in flipStones:
+			stone.sideUp = enemy_of(currentPlayer)
+		
+		value = min(value, max_turn(board, depth + 1, alpha, beta))
+		beta = min(beta, value)
+		
+		board[move.row][move.col] = null
+		for stone in flipStones:
+			stone.sideUp = currentPlayer
+		
+		if alpha >= beta:
+			break
+		
+	return value
+
+func place_move_with_most_flipped_stones(moves):
+	var bestMove : Area
+	var mostFlipStones : int = 0
+	for move in moves:
+		var flipStones = get_flipped_stones(move.row, move.col, currentPlayer, gameBoard).size()
+		if flipStones > mostFlipStones:
+			mostFlipStones = flipStones
+			bestMove = move
+		
+	add_child(bestMove)
+	return bestMove
+	
 func place_best_move(moves):
-	var bestMove = moves[randi() % moves.size()]
+	var bestMove = moves[0]
+	var bestValue : float = -INF
+	for move in moves:
+		var moveStone = add_stone_on_board(move.row, move.col, currentPlayer, gameBoard)
+		var flipStones = get_flipped_stones(move.row, move.col, currentPlayer, gameBoard)
+		for stone in flipStones:
+			stone.sideUp = currentPlayer
+		
+		var value = max_turn(gameBoard)
+		if value > bestValue:
+			bestMove = move
+			bestValue = value
+		
+		gameBoard[move.row][move.col] = null
+		for stone in flipStones:
+			stone.sideUp = enemy_of(currentPlayer)
+	
 	add_child(bestMove)
 	return bestMove

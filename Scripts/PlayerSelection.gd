@@ -29,9 +29,6 @@ func _ready():
 		update_light_player(1)
 	else:
 		update_light_player(0)
-	
-	update_dark_difficulty(globals.darkDifficulty)
-	update_light_difficulty(globals.lightDifficulty)
 
 func update_dark_player(to : int):
 	if to == 0:
@@ -49,6 +46,9 @@ func update_dark_player(to : int):
 	darkSlider.value = to
 
 func update_light_player(to : int):
+	lightSlider.value = to
+	globals.lightDifficulty = to
+	
 	if to == 0:
 		globals.lightAI = false
 		lightDifficultyOptions.get_parent().visible = false
@@ -62,42 +62,27 @@ func update_light_player(to : int):
 		lightPlayerOptions.get_node("Player").add_color_override("font_color", dark)
 		lightPlayerOptions.get_node("CPU").add_color_override("font_color", light)
 	
-	lightSlider.value = to
 
 func update_dark_difficulty(to : int):
-	if to == 1:
+	if to == -1:
 		darkDifficultyOptions.get_node("Easy").add_color_override("font_color", dark)
-		darkDifficultyOptions.get_node("Normal").add_color_override("font_color", light)
 		darkDifficultyOptions.get_node("Hard").add_color_override("font_color", light)
-	elif to == 2:
+	elif to == 0:
 		darkDifficultyOptions.get_node("Easy").add_color_override("font_color", light)
-		darkDifficultyOptions.get_node("Normal").add_color_override("font_color", dark)
-		darkDifficultyOptions.get_node("Hard").add_color_override("font_color", light)
-	elif to == 3:
-		darkDifficultyOptions.get_node("Easy").add_color_override("font_color", light)
-		darkDifficultyOptions.get_node("Normal").add_color_override("font_color", light)
 		darkDifficultyOptions.get_node("Hard").add_color_override("font_color", dark)
 	
-	darkDifficultySilder.value = to
 	globals.darkDifficulty = to
-
-
+	
 func update_light_difficulty(to : int):
-	if to == 1:
+	if to == -1:
 		lightDifficultyOptions.get_node("Easy").add_color_override("font_color", light)
-		lightDifficultyOptions.get_node("Normal").add_color_override("font_color", dark)
 		lightDifficultyOptions.get_node("Hard").add_color_override("font_color", dark)
-	elif to == 2:
+	elif to == 0:
 		lightDifficultyOptions.get_node("Easy").add_color_override("font_color", dark)
-		lightDifficultyOptions.get_node("Normal").add_color_override("font_color", light)
-		lightDifficultyOptions.get_node("Hard").add_color_override("font_color", dark)
-	elif to == 3:
-		lightDifficultyOptions.get_node("Easy").add_color_override("font_color", dark)
-		lightDifficultyOptions.get_node("Normal").add_color_override("font_color", dark)
 		lightDifficultyOptions.get_node("Hard").add_color_override("font_color", light)
 	
-	lightDifficultySlider.value = to
 	globals.lightDifficulty = to
+	
 
 func play_game():
 	get_tree().change_scene_to(globals.gamePlay)
