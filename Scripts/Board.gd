@@ -1,4 +1,4 @@
-extends MeshInstance
+	extends MeshInstance
 
 signal up_to_date
 
