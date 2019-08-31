@@ -1,10 +1,10 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://Models/Board/boardGreen.material" type="Material" id=1]
 [ext_resource path="res://Models/Board/boardOutsideLines.material" type="Material" id=2]
 [ext_resource path="res://Models/Board/boardInsideLines.material" type="Material" id=3]
 [ext_resource path="res://Scenes/Stone.tscn" type="PackedScene" id=4]
-[ext_resource path="res://Sprites/Title.png" type="Texture" id=5]
+[ext_resource path="res://Fonts/Fredericka_the_Great/FrederickatheGreat-Regular.ttf" type="DynamicFontData" id=5]
 [ext_resource path="res://Scripts/PlayerSelection.gd" type="Script" id=6]
 [ext_resource path="res://Fonts/Controller.tres" type="DynamicFont" id=7]
 [ext_resource path="res://Sprites/Space.png" type="Texture" id=8]
@@ -52,6 +52,13 @@ surfaces/2 = {
 "vertex_count": 1600
 }
 
+[sub_resource type="DynamicFont" id=3]
+size = 200
+outline_size = 15
+outline_color = Color( 0, 0, 0, 1 )
+extra_spacing_char = 45
+font_data = ExtResource( 5 )
+
 [sub_resource type="ArrayMesh" id=2]
 resource_name = "Stone"
 surfaces/0 = {
@@ -86,6 +93,7 @@ transform = Transform( 1, 0, 0, 0, -0.422618, 0.906308, 0, -0.906308, -0.422618,
 light_energy = 2.0
 
 [node name="Board" type="MeshInstance" parent="."]
+editor/display_folded = true
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, 0 )
 mesh = SubResource( 1 )
 material/0 = null
@@ -95,7 +103,7 @@ material/2 = null
 [node name="Camera" type="Camera" parent="Board"]
 transform = Transform( 1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 2.02, 3.5 )
 current = true
-fov = 57.9
+fov = 57.6
 size = 18.0
 
 [node name="Black Stone" parent="Board" instance=ExtResource( 4 )]
@@ -114,14 +122,25 @@ script = null
 transform = Transform( 1, 0, 0, 0, -1, -8.74228e-08, 0, 8.74228e-08, -1, -0.5, 0, 0.5 )
 script = null
 
-[node name="Title" type="TextureRect" parent="."]
-margin_top = 200.0
-margin_right = 1440.0
-texture = ExtResource( 5 )
-stretch_mode = 3
+[node name="Title Panel" type="PanelContainer" parent="."]
+anchor_right = 1.0
+margin_top = 90.0
+margin_bottom = 350.0
+
+[node name="Title" type="Label" parent="Title Panel"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 1433.0
+margin_bottom = 253.0
+custom_fonts/font = SubResource( 3 )
+custom_colors/font_color = Color( 1, 1, 0, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
+text = "OTHELLO"
+align = 1
+valign = 1
 
 [node name="Players" type="HBoxContainer" parent="."]
-margin_top = 500.0
+margin_top = 450.0
 margin_right = 1440.0
 margin_bottom = 1249.0
 custom_constants/separation = 300
@@ -131,7 +150,7 @@ script = ExtResource( 6 )
 [node name="Dark" type="VSplitContainer" parent="Players"]
 margin_left = 70.0
 margin_right = 570.0
-margin_bottom = 749.0
+margin_bottom = 799.0
 
 [node name="Controller" type="Button" parent="Players/Dark"]
 margin_right = 500.0
@@ -144,22 +163,21 @@ custom_colors/font_color_pressed = Color( 0, 0, 0, 1 )
 text = "PLAYER"
 
 [node name="Display" type="CenterContainer" parent="Players/Dark"]
-editor/display_folded = true
 margin_top = 141.0
 margin_right = 500.0
-margin_bottom = 749.0
+margin_bottom = 799.0
 
 [node name="Space" type="TextureRect" parent="Players/Dark/Display"]
-margin_top = 54.0
+margin_top = 79.0
 margin_right = 500.0
-margin_bottom = 554.0
+margin_bottom = 579.0
 texture = ExtResource( 8 )
 
 [node name="DiscContainer" type="ViewportContainer" parent="Players/Dark/Display"]
 margin_left = 30.0
-margin_top = 84.0
+margin_top = 109.0
 margin_right = 470.0
-margin_bottom = 524.0
+margin_bottom = 549.0
 
 [node name="DiscViewer" type="Viewport" parent="Players/Dark/Display/DiscContainer"]
 editor/display_folded = true
@@ -182,9 +200,9 @@ flipHeight = null
 flipDuration = null
 
 [node name="Instructions" type="Label" parent="Players/Dark"]
-margin_top = 698.0
+margin_top = 720.0
 margin_right = 500.0
-margin_bottom = 947.0
+margin_bottom = 969.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 0
@@ -202,7 +220,7 @@ valign = 1
 [node name="Light" type="VSplitContainer" parent="Players"]
 margin_left = 870.0
 margin_right = 1370.0
-margin_bottom = 749.0
+margin_bottom = 799.0
 
 [node name="Controller" type="Button" parent="Players/Light"]
 margin_right = 500.0
@@ -218,20 +236,20 @@ text = "PLAYER"
 editor/display_folded = true
 margin_top = 141.0
 margin_right = 500.0
-margin_bottom = 749.0
+margin_bottom = 799.0
 
 [node name="Space" type="TextureRect" parent="Players/Light/Display"]
-margin_top = 54.0
+margin_top = 79.0
 margin_right = 500.0
-margin_bottom = 554.0
+margin_bottom = 579.0
 texture = ExtResource( 8 )
 
 [node name="DiscContainer" type="ViewportContainer" parent="Players/Light/Display"]
 editor/display_folded = true
 margin_left = 30.0
-margin_top = 84.0
+margin_top = 109.0
 margin_right = 470.0
-margin_bottom = 524.0
+margin_bottom = 549.0
 
 [node name="DiscViewer" type="Viewport" parent="Players/Light/Display/DiscContainer"]
 size = Vector2( 440, 440 )
@@ -251,9 +269,9 @@ transform = Transform( 1, 0, 0, 0, -1, -8.74228e-08, 0, 8.74228e-08, -1, 10, 0, 
 mesh = SubResource( 2 )
 
 [node name="Instructions" type="Label" parent="Players/Light"]
-margin_top = 698.0
+margin_top = 720.0
 margin_right = 500.0
-margin_bottom = 947.0
+margin_bottom = 969.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 0

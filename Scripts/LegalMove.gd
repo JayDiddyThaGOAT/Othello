@@ -51,7 +51,7 @@ func run_ai_move():
 func _process(delta):
 	if not visible:
 		if flipStones.size() > 0:
-			for stone in flipStones:
+			for stone in flipStones: 
 				if not stone.flipped:
 					return
 			

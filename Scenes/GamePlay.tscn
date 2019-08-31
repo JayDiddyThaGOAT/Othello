@@ -152,6 +152,7 @@ margin_right = 470.0
 margin_bottom = 520.0
 
 [node name="DiscViewer" type="Viewport" parent="Players/Dark/Score/DiscContainer"]
+editor/display_folded = true
 size = Vector2( 440, 440 )
 transparent_bg = true
 handle_input_locally = false

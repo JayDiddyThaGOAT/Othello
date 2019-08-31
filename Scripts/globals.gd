@@ -1,9 +1,9 @@
 extends Node
 
 var darkAI : bool = false
-var lightAI : bool = false
+var lightAI : bool = true
 
-var aiDifficulty : int = 2
+var aiDifficulty : int = 0
 
 onready var mainMenu = preload("res://Scenes/StartScene.tscn")
 onready var gamePlay = preload("res://Scenes/GamePlay.tscn")
