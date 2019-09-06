@@ -281,6 +281,22 @@ func search_for_move_at(direction : String, rootStone : MeshInstance, board : Ar
 			return create_legal_move(row, col, rootStone.sideUp, board)
 
 func get_legal_moves_from(player : String, board):
+	var playerStones : int = 0
+	var enemyStones : int = 0
+	for row in range(SIZE):
+		for col in range(SIZE):
+			var stone = board[row][col]
+			if stone == null:
+				continue
+			
+			if stone.sideUp == currentPlayer:
+				playerStones += 1
+			elif stone.sideUp == enemy_of(currentPlayer):
+				enemyStones += 1
+	
+	if playerStones == 0 or enemyStones == 0:
+		return []
+	
 	var legalMoves = []
 	
 	for row in range(SIZE):
@@ -298,7 +314,20 @@ func get_legal_moves_from(player : String, board):
 	return legalMoves
 
 func place_legal_moves(legalMoves):
-	if legalMoves.size() <= 0:
+	var playerStones : int = 0
+	var enemyStones : int = 0
+	for row in range(SIZE):
+		for col in range(SIZE):
+			var stone = gameBoard[row][col]
+			if stone == null:
+				continue
+			
+			if stone.sideUp == currentPlayer:
+				playerStones += 1
+			elif stone.sideUp == enemy_of(currentPlayer):
+				enemyStones += 1
+	
+	if playerStones == 0 or enemyStones == 0:
 		return
 	
 	for move in legalMoves:
@@ -313,7 +342,7 @@ func place_best_move(legalMoves):
 		for stone in flank:
 			stone.sideUp = currentPlayer
 		
-		var value = max_turn(gameBoard)
+		var value = evaluate(gameBoard)
 		
 		gameBoard[move.row][move.col] = null
 		for stone in flank:
@@ -329,71 +358,45 @@ func place_best_move(legalMoves):
 	else:
 		return null
 
-func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
-	var legalMoves = get_legal_moves_from(currentPlayer, board)
-	if depth == globals.aiDifficulty or legalMoves.size() <= 0:
-		return evaluate(board)
-			
-	var value = -INF
-	for move in legalMoves:
-		add_stone_on_board(move.row, move.col, currentPlayer, board)
-		var flank = get_flipped_stones(move.row, move.col, currentPlayer, board)
-		for stone in flank:
-			stone.sideUp = currentPlayer
-		
-		value = max(value, min_turn(board, depth + 1, alpha, beta))
-		alpha = max(alpha, value)
-		
-		board[move.row][move.col] = null
-		for stone in flank:
-			stone.sideUp = enemy_of(currentPlayer)
-		
-		if alpha >= beta:
-			break
-	
-	return value
-
-func min_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
-	var legalMoves = get_legal_moves_from(enemy_of(currentPlayer), board)
-	if depth == globals.aiDifficulty or legalMoves.size() <= 0:
-		return evaluate(board)
-	
-	var value = INF
-	for move in legalMoves:
-		var placedStone = add_stone_on_board(move.row, move.col, enemy_of(currentPlayer), board)
-		var flank = get_flipped_stones(move.row, move.col, enemy_of(currentPlayer), board)
-		for stone in flank:
-			stone.sideUp = enemy_of(currentPlayer)
-		
-		value = min(value, max_turn(board, depth + 1, alpha, beta))
-		beta = min(beta, value)
-		
-		board[move.row][move.col] = null
-		for stone in flank:
-			stone.sideUp = currentPlayer
-		
-		if alpha >= beta:
-			break
-	
-	return value
-
 func evaluate(board : Array):
 	var playerStones : int = 0
 	var enemyStones : int = 0
 	
-	var score : int = 0
+	var playerMobility : float = 0
+	var enemyMobility : float = 0
+	
+	var playerPositionScore : float = 0
+	var enemyPositionScore : float = 0
 	
 	for row in range(SIZE):
 		for col in range(SIZE):
 			var stone = board[row][col]
 			if stone == null:
-				continue
-			
-			if stone.sideUp == currentPlayer:
-				playerStones += 1
-				score += globals.values[row][col]
-			elif stone.sideUp == enemy_of(currentPlayer):
-				enemyStones += 1
-				score -= globals.values[row][col]
+				var surroundingStones = neighbors_at(row, col, board).values()
+				for s in surroundingStones:
+					if s == null:
+						continue
+					
+					if s.sideUp == currentPlayer:
+						enemyMobility += 1
+					elif s.sideUp == enemy_of(currentPlayer):
+						playerMobility += 1
+			else:
+				if stone.sideUp == currentPlayer:
+					playerStones += 1
+					playerPositionScore += globals.values[row][col]
+				elif stone.sideUp == enemy_of(currentPlayer):
+					enemyStones += 1
+					enemyPositionScore += globals.values[row][col]
 	
-	return score
+	var parity = 100 * (playerStones - enemyStones) / (playerStones + enemyStones)
+	
+	var mobility : float = 0
+	if playerMobility + enemyMobility != 0:
+		mobility = 100 * (playerMobility - enemyMobility) / (enemyMobility + playerMobility)
+	
+	var weights : float = 0
+	if playerPositionScore + enemyPositionScore != 0:
+		weights = 100 * (playerPositionScore - enemyPositionScore) / (playerPositionScore + enemyPositionScore)
+	
+	return (0.1 * parity) * mobility * (10 * weights)
