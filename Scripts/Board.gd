@@ -19,6 +19,7 @@ var currentPlayer : String = "Dark"
 var currentLegalMoves : Array = []
 
 func _ready():
+	randomize()
 	for row in range(SIZE):
 		gameBoard.append([])
 		for col in range(SIZE):
@@ -90,27 +91,25 @@ func update_hud(player : String):
 				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
 				
-				darkScore.get_node("Score/Number").text = String(darkStones + emptySpaces)
-				
-				darkScore.get_node("Turn Summary").text = "WINNER\n"
-				lightScore.get_node("Turn Summary").text = "LOSER\n"
+				darkScore.get_node("Turn Summary").text = "WINNER"
+				lightScore.get_node("Turn Summary").text = "LOSER"
 			"Light":
 				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
 				
-				lightScore.get_node("Score/Number").text = String(lightStones + emptySpaces)
+				lightScore.get_node("Score/Number").text = String(lightStones)
 				
-				lightScore.get_node("Turn Summary").text = "WINNER\n"
-				darkScore.get_node("Turn Summary").text = "LOSER\n"
+				lightScore.get_node("Turn Summary").text = "WINNER"
+				darkScore.get_node("Turn Summary").text = "LOSER"
 			"Tie":
 				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				
-				darkScore.get_node("Score/Number").text = String(darkStones + emptySpaces)
-				lightScore.get_node("Score/Number").text = String(lightStones + emptySpaces)
+				darkScore.get_node("Score/Number").text = String(darkStones)
+				lightScore.get_node("Score/Number").text = String(lightStones)
 				
-				darkScore.get_node("Turn Summary").text = "TIE\n"
-				lightScore.get_node("Turn Summary").text = "TIE\n"
+				darkScore.get_node("Turn Summary").text = "TIE"
+				lightScore.get_node("Turn Summary").text = "TIE"
 		
 		return
 	
@@ -121,18 +120,18 @@ func update_hud(player : String):
 			darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 			lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
 			
-			if not repeatedTurn: darkScore.get_node("Turn Summary").text = darkController.text + " GOES\n"
-			else: darkScore.get_node("Turn Summary").text = darkController.text + " GOES\nAGAIN"
+			if not repeatedTurn: darkScore.get_node("Turn Summary").text = darkController.text + " GOES"
+			else: darkScore.get_node("Turn Summary").text = darkController.text + " GOES AGAIN"
 			
-			lightScore.get_node("Turn Summary").text = "\n"
+			lightScore.get_node("Turn Summary").text = ""
 		"Light":
 			lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 			darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
 			
-			if not repeatedTurn: lightScore.get_node("Turn Summary").text = lightController.text + " GOES\n"
-			else: lightScore.get_node("Turn Summary").text = lightController.text + " GOES\nAGAIN"
+			if not repeatedTurn: lightScore.get_node("Turn Summary").text = lightController.text + " GOES"
+			else: lightScore.get_node("Turn Summary").text = lightController.text + " GOES AGAIN"
 			
-			darkScore.get_node("Turn Summary").text = "\n"
+			darkScore.get_node("Turn Summary").text = ""
 	
 	emit_signal("up_to_date")
 
@@ -145,6 +144,7 @@ func begin_turn():
 			return
 		
 		move.AI.start()
+
 
 func enemy_of(player : String):
 	match player:
@@ -334,7 +334,6 @@ func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float
 	if depth == globals.aiDifficulty or legalMoves.size() <= 0:
 		return evaluate(board)
 			
-	
 	var value = -INF
 	for move in legalMoves:
 		add_stone_on_board(move.row, move.col, currentPlayer, board)
@@ -382,126 +381,19 @@ func evaluate(board : Array):
 	var playerStones : int = 0
 	var enemyStones : int = 0
 	
-	var playerFrontierStones : int = 0
-	var enemyFrontierStones : int = 0
-	
-	var square_weights = [ [ 100, -20,  10,    5,   5,  10,  -20,  100],
-						   [ -20, -50,  -2,   -2,  -2,  -2,  -50,  -20],
-						   [  10,  -2,  -1,   -1,  -1,  -1,  -2,    10],
-						   [   5,  -2,  -1,   -1,  -1,  -1,  -2,     5],
-						   [   5,  -2,  -1,   -1,  -1,  -1,  -2,     5],
-						   [  10,  -2,  -1,   -1,  -1,  -1,  -2,    10],
-						   [ -20, -50,  -2,   -2,  -2,  -2,  -50,  -20],
-						   [ 100, -20,  10,    5,   5,  10,  -20,  100]
-						 ]
-	var d : int = 0
+	var score : int = 0
 	
 	for row in range(SIZE):
 		for col in range(SIZE):
-			var i : int = row % 4
-			var j : int = col % 4
-			
 			var stone = board[row][col]
-			if stone != null:
-				if stone.sideUp == currentPlayer: 
-					playerStones += 1
-					d += square_weights[i][j]
-				elif stone.sideUp == enemy_of(currentPlayer): 
-					enemyStones += 1
-					d += -square_weights[i][j]
-			else:
-				var adjacentToEmptyStones = neighbors_at(row, col, board).values()
-				for stone in adjacentToEmptyStones:
-					if stone == null:
-						continue
-					
-					if stone.sideUp == currentPlayer: playerFrontierStones += 1
-					elif stone.sideUp == enemy_of(currentPlayer): enemyFrontierStones += 1
-	
-	var p: int
-	if playerStones == enemyStones:
-		p = 0
-	elif playerStones > enemyStones:
-		p = 100 * (playerStones / (playerStones + enemyStones))
-	elif playerStones < enemyStones:
-		p = -100 * (enemyStones / (playerStones + enemyStones))
-	
-	var playerLegalMoves : int = get_legal_moves_from(currentPlayer, board).size()
-	var enemyLegalMoves : int = get_legal_moves_from(enemy_of(currentPlayer), board).size()
-	
-	var f : int
-	if playerFrontierStones == enemyFrontierStones:
-		f = 0
-	elif playerFrontierStones > enemyFrontierStones:
-		f = -100 * (playerFrontierStones / (playerFrontierStones + enemyFrontierStones))
-	elif playerFrontierStones < enemyFrontierStones:
-		f = 100 * (enemyFrontierStones / (playerFrontierStones + enemyFrontierStones))
-	
-	var m : int
-	if playerLegalMoves == enemyLegalMoves:
-		m = 0
-	elif playerLegalMoves > enemyLegalMoves:
-		m = 100 * (playerLegalMoves / (playerLegalMoves + enemyLegalMoves))
-	elif playerLegalMoves < enemyLegalMoves:
-		m = -100 * (enemyLegalMoves / (playerLegalMoves + enemyLegalMoves))
-	
-	var playerCorners : int = 0
-	var enemyCorners : int = 0
-	
-	var playerCornerCloseness : int = 0
-	var enemyCornerCloseness : int = 0
-	
-	var topLeftCorner = board[0][0]
-	if topLeftCorner != null:
-		if topLeftCorner.sideUp == currentPlayer: playerStones += 1
-		elif topLeftCorner.sideUp == enemy_of(currentPlayer): enemyStones += 1
-	else:
-		for stone in neighbors_at(0, 0, board).values():
 			if stone == null:
 				continue
 			
-			if stone.sideUp == currentPlayer: playerCornerCloseness += 1
-			elif stone.sideUp == enemy_of(currentPlayer): enemyCornerCloseness += 1
-		
+			if stone.sideUp == currentPlayer:
+				playerStones += 1
+				score += globals.values[row][col]
+			elif stone.sideUp == enemy_of(currentPlayer):
+				enemyStones += 1
+				score -= globals.values[row][col]
 	
-	var topRightCorner = board[0][SIZE - 1]
-	if topRightCorner != null:
-		if topRightCorner.sideUp == currentPlayer: playerStones += 1
-		elif topRightCorner.sideUp == enemy_of(currentPlayer): enemyStones += 1
-	else:
-		for stone in neighbors_at(0, SIZE - 1, board).values():
-			if stone == null:
-				continue
-			
-			if stone.sideUp == currentPlayer: playerCornerCloseness += 1
-			elif stone.sideUp == enemy_of(currentPlayer): enemyCornerCloseness += 1
-	
-	var botLeftCorner = board[SIZE - 1][0]
-	if botLeftCorner != null:
-		if botLeftCorner.sideUp == currentPlayer: playerStones += 1
-		elif botLeftCorner.sideUp == enemy_of(currentPlayer): enemyStones += 1
-	else:
-		for stone in neighbors_at(SIZE - 1, 0, board).values():
-			if stone == null:
-				continue
-			
-			if stone.sideUp == currentPlayer: playerCornerCloseness += 1
-			elif stone.sideUp == enemy_of(currentPlayer): enemyCornerCloseness += 1
-	
-	var botRightCorner = board[SIZE - 1][SIZE - 1]
-	if botRightCorner != null:
-		if botRightCorner.sideUp == currentPlayer: playerStones += 1
-		elif botRightCorner.sideUp == enemy_of(currentPlayer): enemyStones += 1 
-	else:
-		for stone in neighbors_at(SIZE - 1, SIZE - 1, board).values():
-			if stone == null:
-				continue
-			
-			if stone.sideUp == currentPlayer: playerCornerCloseness += 1
-			elif stone.sideUp == enemy_of(currentPlayer): enemyCornerCloseness += 1
-	
-	var c : int = (25 * playerCorners) - (25 * enemyCorners)
-	var l : int = (-12.5 * playerCornerCloseness) + (12.5 * enemyCornerCloseness)
-	
-	#(10, 801.724, 382.026, 78.922, 74.396, 10).
-	return (10 * p) + (801.724 * c) + (382.026 * l) + (78.922 * m) + (74.396 * f) + (10 * d)
+	return score

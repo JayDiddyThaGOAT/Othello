@@ -1,9 +1,18 @@
 extends Node
 
-var darkAI : bool = false
+var aiDifficulty : int = 2
+
+var darkAI : bool = true
 var lightAI : bool = true
 
-var aiDifficulty : int = 0
+onready var values =  [[ 4, -3,  2,  2,  2,  2, -3,  4],
+					   [-3, -4, -1, -1, -1, -1, -4, -3],
+					   [ 2, -1,  1,  0,  0,  1, -1,  2],
+					   [ 2, -1,  0,  1,  1,  0, -1,  2],
+					   [ 2, -1,  0,  1,  1,  0, -1,  2],
+					   [ 2, -1,  1,  0,  0,  1, -1,  2],
+					   [-3, -4, -1, -1, -1, -1, -4, -3],
+					   [ 4, -3,  2,  2,  2,  2, -3,  4]]
 
 onready var mainMenu = preload("res://Scenes/StartScene.tscn")
 onready var gamePlay = preload("res://Scenes/GamePlay.tscn")

@@ -135,6 +135,7 @@ text = "PLAYER"
 align = 1
 
 [node name="Score" type="CenterContainer" parent="Players/Dark"]
+editor/display_folded = true
 margin_top = 149.0
 margin_right = 500.0
 margin_bottom = 749.0
@@ -146,6 +147,7 @@ margin_bottom = 550.0
 texture = ExtResource( 7 )
 
 [node name="DiscContainer" type="ViewportContainer" parent="Players/Dark/Score"]
+editor/display_folded = true
 margin_left = 30.0
 margin_top = 80.0
 margin_right = 470.0
@@ -178,17 +180,18 @@ custom_fonts/font = ExtResource( 11 )
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 
 [node name="Turn Summary" type="Label" parent="Players/Dark"]
-margin_top = 709.0
+margin_top = 700.0
 margin_right = 500.0
-margin_bottom = 910.0
+margin_bottom = 800.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+size_flags_stretch_ratio = 0.0
 custom_fonts/font = ExtResource( 12 )
 custom_colors/font_color = Color( 0, 0, 0, 1 )
-custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
-text = "
-"
+text = "PLAYER GOES"
 align = 1
 valign = 1
-clip_text = true
+autowrap = true
 
 [node name="Light" type="VSplitContainer" parent="Players"]
 margin_left = 870.0
@@ -196,6 +199,7 @@ margin_right = 1370.0
 margin_bottom = 749.0
 
 [node name="Controller" type="PanelContainer" parent="Players/Light"]
+editor/display_folded = true
 margin_right = 500.0
 margin_bottom = 137.0
 
@@ -210,6 +214,7 @@ text = "PLAYER"
 align = 1
 
 [node name="Score" type="CenterContainer" parent="Players/Light"]
+editor/display_folded = true
 margin_top = 149.0
 margin_right = 500.0
 margin_bottom = 749.0
@@ -221,12 +226,14 @@ margin_bottom = 550.0
 texture = ExtResource( 7 )
 
 [node name="DiscContainer" type="ViewportContainer" parent="Players/Light/Score"]
+editor/display_folded = true
 margin_left = 30.0
 margin_top = 80.0
 margin_right = 470.0
 margin_bottom = 520.0
 
 [node name="DiscViewer" type="Viewport" parent="Players/Light/Score/DiscContainer"]
+editor/display_folded = true
 size = Vector2( 440, 440 )
 transparent_bg = true
 handle_input_locally = false
@@ -253,16 +260,17 @@ custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 0 )
 
 [node name="Turn Summary" type="Label" parent="Players/Light"]
-margin_top = 709.0
+margin_top = 700.0
 margin_right = 500.0
-margin_bottom = 910.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+size_flags_stretch_ratio = 0.0
 custom_fonts/font = ExtResource( 12 )
 custom_colors/font_color = Color( 1, 1, 1, 1 )
-custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
-text = "
-"
+text = "PLAYER GOES"
 align = 1
 valign = 1
+autowrap = true
 
 [node name="MainMenuButton" type="Button" parent="."]
 anchor_top = 1.0
