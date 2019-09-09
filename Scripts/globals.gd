@@ -1,7 +1,5 @@
 extends Node
 
-var aiDifficulty : int = 0
-
 var darkAI : bool = false
 var lightAI : bool = true
 onready var values =  [[ 120, -20,  20,  5,  5, -20,  20, 120],

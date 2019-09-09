@@ -13,6 +13,9 @@ onready var lightScore = get_parent().get_node("Players/Light")
 onready var darkController = darkScore.get_node("Controller/Name")
 onready var lightController = lightScore.get_node("Controller/Name")
 
+onready var darkTurnSummary = get_parent().get_node("Dark - Turn Summary")
+onready var lightTurnSummary = get_parent().get_node("Light - Turn Summary")
+
 var gameBoard : Array = []
 
 var currentPlayer : String = "Dark"
@@ -65,7 +68,7 @@ func up_next(nextPlayer : String, board : Array):
 			return null
 
 func update_hud(player : String):
-	var repeatedTurn
+	var repeatedTurn : bool = false
 	
 	var darkStones : int = 0
 	var lightStones : int = 0
@@ -91,16 +94,16 @@ func update_hud(player : String):
 				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
 				
-				darkScore.get_node("Turn Summary").text = "WINNER"
-				lightScore.get_node("Turn Summary").text = "LOSER"
+				darkTurnSummary.text = "WINNER\n"
+				lightTurnSummary.text = "LOSER\n"
 			"Light":
 				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
 				
 				lightScore.get_node("Score/Number").text = String(lightStones)
 				
-				lightScore.get_node("Turn Summary").text = "WINNER"
-				darkScore.get_node("Turn Summary").text = "LOSER"
+				lightTurnSummary.text = "WINNER\n"
+				darkTurnSummary.text = "LOSER\n"
 			"Tie":
 				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
@@ -108,11 +111,12 @@ func update_hud(player : String):
 				darkScore.get_node("Score/Number").text = String(darkStones)
 				lightScore.get_node("Score/Number").text = String(lightStones)
 				
-				darkScore.get_node("Turn Summary").text = "TIE"
-				lightScore.get_node("Turn Summary").text = "TIE"
+				darkTurnSummary.text = "TIE\n"
+				lightTurnSummary.text = "TIE\n"
 		
 		return
 	
+	repeatedTurn = currentPlayer == nextPlayer and not darkStones == 2 and not lightStones == 2
 	currentPlayer = nextPlayer
 	currentLegalMoves = get_legal_moves_from(currentPlayer, gameBoard)
 	match currentPlayer:
@@ -120,18 +124,18 @@ func update_hud(player : String):
 			darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 			lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
 			
-			if not repeatedTurn: darkScore.get_node("Turn Summary").text = darkController.text + " GOES"
-			else: darkScore.get_node("Turn Summary").text = darkController.text + " GOES AGAIN"
+			if not repeatedTurn: darkTurnSummary.text = darkController.text + " GOES\n"
+			else: darkTurnSummary.text = darkController.text + " GOES\nAGAIN"
 			
-			lightScore.get_node("Turn Summary").text = ""
+			lightTurnSummary.text = ""
 		"Light":
 			lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 			darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
 			
-			if not repeatedTurn: lightScore.get_node("Turn Summary").text = lightController.text + " GOES"
-			else: lightScore.get_node("Turn Summary").text = lightController.text + " GOES AGAIN"
+			if not repeatedTurn: lightTurnSummary.text = lightController.text + " GOES\n"
+			else: lightTurnSummary.text = lightController.text + " GOES\nAGAIN"
 			
-			darkScore.get_node("Turn Summary").text = ""
+			darkTurnSummary.text = ""
 	
 	emit_signal("up_to_date")
 
@@ -399,4 +403,4 @@ func evaluate(board : Array):
 	if playerPositionScore + enemyPositionScore != 0:
 		weights = 100 * (playerPositionScore - enemyPositionScore) / (playerPositionScore + enemyPositionScore)
 	
-	return (0.1 * parity) * mobility * (10 * weights)
+	return (0.1 * parity) + weights + (10 * mobility)

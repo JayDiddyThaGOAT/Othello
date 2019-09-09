@@ -135,7 +135,6 @@ text = "PLAYER"
 align = 1
 
 [node name="Score" type="CenterContainer" parent="Players/Dark"]
-editor/display_folded = true
 margin_top = 149.0
 margin_right = 500.0
 margin_bottom = 749.0
@@ -178,20 +177,6 @@ margin_right = 250.0
 margin_bottom = 423.0
 custom_fonts/font = ExtResource( 11 )
 custom_colors/font_color = Color( 1, 1, 1, 1 )
-
-[node name="Turn Summary" type="Label" parent="Players/Dark"]
-margin_top = 700.0
-margin_right = 500.0
-margin_bottom = 800.0
-size_flags_horizontal = 0
-size_flags_vertical = 0
-size_flags_stretch_ratio = 0.0
-custom_fonts/font = ExtResource( 12 )
-custom_colors/font_color = Color( 0, 0, 0, 1 )
-text = "PLAYER GOES"
-align = 1
-valign = 1
-autowrap = true
 
 [node name="Light" type="VSplitContainer" parent="Players"]
 margin_left = 870.0
@@ -259,15 +244,34 @@ custom_fonts/font = ExtResource( 11 )
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_colors/font_outline_modulate = Color( 0, 0, 0, 0 )
 
-[node name="Turn Summary" type="Label" parent="Players/Light"]
-margin_top = 700.0
-margin_right = 500.0
+[node name="Dark - Turn Summary" type="Label" parent="."]
+margin_left = 70.0
+margin_top = 1150.0
+margin_right = 570.0
+margin_bottom = 1250.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+size_flags_stretch_ratio = 0.0
+custom_fonts/font = ExtResource( 12 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "PLAYER GOES
+"
+align = 1
+valign = 1
+autowrap = true
+
+[node name="Light - Turn Summary" type="Label" parent="."]
+margin_left = 870.0
+margin_top = 1150.0
+margin_right = 1370.0
+margin_bottom = 1231.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 size_flags_stretch_ratio = 0.0
 custom_fonts/font = ExtResource( 12 )
 custom_colors/font_color = Color( 1, 1, 1, 1 )
-text = "PLAYER GOES"
+text = "PLAYER GOES
+"
 align = 1
 valign = 1
 autowrap = true
