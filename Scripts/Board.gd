@@ -21,14 +21,6 @@ var gameBoard : Array = []
 var currentPlayer : String = "Dark"
 var currentLegalMoves : Array = []
 
-func set_difficulty_for(ai : String):
-	if globals.totalRounds == 2:
-		if ai == "Light" and globals.lightWins < globals.darkWins or ai == "Dark" and globals.darkWins < globals.lightWins:
-			globals.aiFlags[1] = true
-	elif globals.totalRounds == 4:
-		if ai == "Light" and globals.lightWins < globals.darkWins or ai == "Dark" and globals.darkWins < globals.lightWins:
-			globals.aiFlags[2] = true
-
 func _ready():
 	randomize()
 	for row in range(SIZE):
@@ -43,13 +35,13 @@ func _ready():
 	
 	if globals.lightAI:
 		lightController.text = "CPU"
-		set_difficulty_for("Light")
+		set_ai_difficulty()
 	else:
 		lightController.text = "PLAYER"
 	
 	if globals.darkAI:
 		darkController.text = "CPU"
-		set_difficulty_for("Dark")
+		set_ai_difficulty()
 	else:
 		darkController.text = "PLAYER"
 	
@@ -103,7 +95,8 @@ func update_hud(player : String):
 	if nextPlayer == null:
 		match get_player_with_most_discs(gameBoard):
 			"Dark":
-				globals.darkWins += 1
+				if not globals.darkAI and globals.lightAI:
+					globals.aiLoseStreak += 1
 				
 				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
@@ -111,7 +104,8 @@ func update_hud(player : String):
 				darkTurnSummary.text = "WINNER\n"
 				lightTurnSummary.text = "LOSER\n"
 			"Light":
-				globals.lightWins += 1
+				if not globals.lightAI and globals.darkAI:
+					globals.aiLoseStreak += 1
 				
 				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
@@ -352,6 +346,12 @@ func place_legal_moves(legalMoves):
 	
 	for move in legalMoves:
 		add_child(move)
+
+func set_ai_difficulty():
+	if globals.aiLoseStreak == 2 and not globals.aiFlags[1]:
+		globals.aiFlags[1] = true
+	elif globals.aiLoseStreak == 4 and not globals.aiFlags[2]:
+		globals.aiFlags[2] = true
 
 func place_best_move(legalMoves):
 	var bestMove : Area
