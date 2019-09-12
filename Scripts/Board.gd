@@ -21,6 +21,14 @@ var gameBoard : Array = []
 var currentPlayer : String = "Dark"
 var currentLegalMoves : Array = []
 
+func set_difficulty_for(ai : String):
+	if globals.totalRounds == 2:
+		if ai == "Light" and globals.lightWins < globals.darkWins or ai == "Dark" and globals.darkWins < globals.lightWins:
+			globals.aiFlags[1] = true
+	elif globals.totalRounds == 4:
+		if ai == "Light" and globals.lightWins < globals.darkWins or ai == "Dark" and globals.darkWins < globals.lightWins:
+			globals.aiFlags[2] = true
+
 func _ready():
 	randomize()
 	for row in range(SIZE):
@@ -35,11 +43,13 @@ func _ready():
 	
 	if globals.lightAI:
 		lightController.text = "CPU"
+		set_difficulty_for("Light")
 	else:
 		lightController.text = "PLAYER"
 	
 	if globals.darkAI:
 		darkController.text = "CPU"
+		set_difficulty_for("Dark")
 	else:
 		darkController.text = "PLAYER"
 	
@@ -51,9 +61,11 @@ func _ready():
 	begin_turn()
 
 func restart_game():
+	globals.totalRounds += 1
 	get_tree().reload_current_scene()
 
 func go_back_to_main_menu():
+	globals.totalRounds = 0
 	get_tree().change_scene_to(globals.mainMenu)
 	
 func up_next(nextPlayer : String, board : Array):
@@ -91,12 +103,16 @@ func update_hud(player : String):
 	if nextPlayer == null:
 		match get_player_with_most_discs(gameBoard):
 			"Dark":
+				globals.darkWins += 1
+				
 				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
 				
 				darkTurnSummary.text = "WINNER\n"
 				lightTurnSummary.text = "LOSER\n"
 			"Light":
+				globals.lightWins += 1
+				
 				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
 				
@@ -393,14 +409,22 @@ func evaluate(board : Array):
 					enemyStones += 1
 					enemyPositionScore += globals.values[row][col]
 	
-	var parity = 100 * (playerStones - enemyStones) / (playerStones + enemyStones)
+	var parity
+	if globals.aiFlags[0]:
+		parity = 100 * (playerStones - enemyStones) / (playerStones + enemyStones)
+	else:
+		parity = 0
 	
-	var mobility : float = 0
-	if playerMobility + enemyMobility != 0:
+	var mobility
+	if globals.aiFlags[1] and playerMobility + enemyMobility != 0:
 		mobility = 100 * (playerMobility - enemyMobility) / (enemyMobility + playerMobility)
+	else:
+		mobility = 0
 	
-	var weights : float = 0
-	if playerPositionScore + enemyPositionScore != 0:
+	var weights
+	if globals.aiFlags[2] and playerPositionScore + enemyPositionScore != 0:
 		weights = 100 * (playerPositionScore - enemyPositionScore) / (playerPositionScore + enemyPositionScore)
+	else:
+		weights = 0
 	
 	return (0.1 * parity) + weights + (10 * mobility)

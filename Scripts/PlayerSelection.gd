@@ -27,6 +27,9 @@ func _ready():
 	
 	darkController.disabled = lightController.text == "CPU"
 	lightController.disabled = darkController.text == "CPU"
+	
+	for i in range(globals.aiFlags.size()):
+		globals.aiFlags[i] = false
 
 func play_game():
 	get_tree().change_scene_to(globals.gamePlay)
