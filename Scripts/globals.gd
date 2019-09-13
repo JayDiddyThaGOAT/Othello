@@ -3,7 +3,7 @@ extends Node
 
 var darkAI : bool = false
 var lightAI : bool = true
-var aiLoseStreak : int = 0
+var aiLosses : int = 0
 onready var aiFlags = [true, false, false]
 onready var values =  [[ 120, -20,  20,  5,  5, -20,  20, 120],
 					   [ -20, -40,  -5, -5, -5,  -5, -40, -20],

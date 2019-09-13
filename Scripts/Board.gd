@@ -53,11 +53,15 @@ func _ready():
 	begin_turn()
 
 func restart_game():
-	globals.totalRounds += 1
+	if !("WINNER" in darkTurnSummary.text or "LOSER" in darkTurnSummary and "WINNER" in lightTurnSummary.text or "LOSER" in darkTurnSummary.text):
+		globals.aiLosses = 0
+		set_ai_difficulty()
+	
 	get_tree().reload_current_scene()
 
 func go_back_to_main_menu():
-	globals.totalRounds = 0
+	globals.aiLosses = 0
+	set_ai_difficulty()
 	get_tree().change_scene_to(globals.mainMenu)
 	
 func up_next(nextPlayer : String, board : Array):
@@ -96,7 +100,7 @@ func update_hud(player : String):
 		match get_player_with_most_discs(gameBoard):
 			"Dark":
 				if not globals.darkAI and globals.lightAI:
-					globals.aiLoseStreak += 1
+					globals.aiLosses += 1
 				
 				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
@@ -105,7 +109,7 @@ func update_hud(player : String):
 				lightTurnSummary.text = "LOSER\n"
 			"Light":
 				if not globals.lightAI and globals.darkAI:
-					globals.aiLoseStreak += 1
+					globals.aiLosses += 1
 				
 				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
@@ -348,9 +352,17 @@ func place_legal_moves(legalMoves):
 		add_child(move)
 
 func set_ai_difficulty():
-	if globals.aiLoseStreak == 2 and not globals.aiFlags[1]:
+	if globals.aiLosses == 0:
+		globals.aiFlags[0] = true
+		globals.aiFlags[1] = false
+		globals.aiFlags[2] = false
+	elif globals.aiLosses == 2:
+		globals.aiFlags[0] = true
 		globals.aiFlags[1] = true
-	elif globals.aiLoseStreak == 4 and not globals.aiFlags[2]:
+		globals.aiFlags[2] = false
+	elif globals.aiLosses == 4:
+		globals.aiFlags[0] = true
+		globals.aiFlags[1] = true
 		globals.aiFlags[2] = true
 
 func place_best_move(legalMoves):
