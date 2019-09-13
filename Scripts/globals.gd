@@ -1,5 +1,6 @@
 extends Node
 
+var currentRound : int = 1
 
 var darkAI : bool = false
 var lightAI : bool = true

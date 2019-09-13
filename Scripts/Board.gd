@@ -13,8 +13,11 @@ onready var lightScore = get_parent().get_node("Players/Light")
 onready var darkController = darkScore.get_node("Controller/Name")
 onready var lightController = lightScore.get_node("Controller/Name")
 
-onready var darkTurnSummary = get_parent().get_node("Dark - Turn Summary")
-onready var lightTurnSummary = get_parent().get_node("Light - Turn Summary")
+onready var darkInstruction = get_parent().get_node("Dark Instruction")
+onready var lightInstruction = get_parent().get_node("Light Instruction")
+
+onready var darkTurnSummary = get_parent().get_node("Dark Turn Summary")
+onready var lightTurnSummary = get_parent().get_node("Light Turn Summary")
 
 var gameBoard : Array = []
 
@@ -33,6 +36,8 @@ func _ready():
 	place_stone(3, 4, "Dark", gameBoard)
 	place_stone(4, 3, "Dark", gameBoard)
 	
+	update_hud(currentPlayer)
+	
 	if globals.lightAI:
 		lightController.text = "CPU"
 		set_ai_difficulty()
@@ -45,7 +50,8 @@ func _ready():
 	else:
 		darkController.text = "PLAYER"
 	
-	update_hud(currentPlayer)
+	darkInstruction.add_color_override("font_color", Color.black)
+	lightInstruction.add_color_override("font_color", Color.white)
 	
 	if globals.darkAI:
 		yield(get_tree().create_timer(currentLegalMoves[0].get_node("AI").wait_time), "timeout")
@@ -53,14 +59,17 @@ func _ready():
 	begin_turn()
 
 func restart_game():
-	if !("WINNER" in darkTurnSummary.text or "LOSER" in darkTurnSummary and "WINNER" in lightTurnSummary.text or "LOSER" in darkTurnSummary.text):
+	if !("WINNER" in darkTurnSummary.text or "LOSER" in darkTurnSummary and "WINNER" in lightTurnSummary.text or "LOSER" in darkTurnSummary.text or "TIE" in darkTurnSummary and "TIE" in lightTurnSummary):
 		globals.aiLosses = 0
 		set_ai_difficulty()
+	else:
+		globals.currentRound += 1
 	
 	get_tree().reload_current_scene()
 
 func go_back_to_main_menu():
 	globals.aiLosses = 0
+	globals.currentRound = 0
 	set_ai_difficulty()
 	get_tree().change_scene_to(globals.mainMenu)
 	
@@ -97,6 +106,14 @@ func update_hud(player : String):
 	var nextPlayer = up_next(enemy_of(player), gameBoard)
 	
 	if nextPlayer == null:
+		if not globals.darkAI:
+			darkInstruction.add_color_override("font_color", Color.yellow)
+			darkInstruction.text = "TAP A BUTTON"
+		
+		if not globals.lightAI:
+			lightInstruction.add_color_override("font_color", Color.yellow)
+			lightInstruction.text = "TAP A BUTTON"
+		
 		match get_player_with_most_discs(gameBoard):
 			"Dark":
 				if not globals.darkAI and globals.lightAI:
@@ -135,6 +152,13 @@ func update_hud(player : String):
 	currentLegalMoves = get_legal_moves_from(currentPlayer, gameBoard)
 	match currentPlayer:
 		"Dark":
+			lightInstruction.text = ""
+			if globals.darkAI:
+				darkInstruction.text = ""
+			else:
+				if globals.currentRound == 1:
+					darkInstruction.text = "TAP A SPACE"
+			
 			darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 			lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
 			
@@ -143,6 +167,13 @@ func update_hud(player : String):
 			
 			lightTurnSummary.text = ""
 		"Light":
+			darkInstruction.text = ""
+			if globals.lightAI:
+				lightInstruction.text = ""
+			else:
+				if globals.currentRound == 1:
+					lightInstruction.text = "TAP A SPACE"
+				
 			lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 			darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
 			
@@ -353,17 +384,31 @@ func place_legal_moves(legalMoves):
 
 func set_ai_difficulty():
 	if globals.aiLosses == 0:
-		globals.aiFlags[0] = true
-		globals.aiFlags[1] = false
-		globals.aiFlags[2] = false
+		if not globals.aiFlags[0]:
+			globals.aiFlags[0] = true
+			globals.aiFlags[1] = false
+			globals.aiFlags[2] = false
 	elif globals.aiLosses == 2:
-		globals.aiFlags[0] = true
-		globals.aiFlags[1] = true
-		globals.aiFlags[2] = false
+		if not globals.aiFlags[1]:
+			if globals.lightAI:
+				lightInstruction.text = "+1 AWARENESS"
+			elif globals.darkAI:
+				darkInstruction.text = "+1 AWARENESS"
+		
+			globals.aiFlags[0] = true
+			globals.aiFlags[1] = true
+			globals.aiFlags[2] = false
+		
 	elif globals.aiLosses == 4:
-		globals.aiFlags[0] = true
-		globals.aiFlags[1] = true
-		globals.aiFlags[2] = true
+		if not globals.aiFlags[2]:
+			if globals.lightAI:
+				lightInstruction.text = "+1 DEFENSE"
+			elif globals.darkAI:
+				darkInstruction.text = "+1 DEFENSE"
+			
+			globals.aiFlags[0] = true
+			globals.aiFlags[1] = true
+			globals.aiFlags[2] = true
 
 func place_best_move(legalMoves):
 	var bestMove : Area
@@ -427,16 +472,16 @@ func evaluate(board : Array):
 	else:
 		parity = 0
 	
-	var mobility
-	if globals.aiFlags[1] and playerMobility + enemyMobility != 0:
-		mobility = 100 * (playerMobility - enemyMobility) / (enemyMobility + playerMobility)
-	else:
-		mobility = 0
-	
 	var weights
-	if globals.aiFlags[2] and playerPositionScore + enemyPositionScore != 0:
+	if globals.aiFlags[1] and playerPositionScore + enemyPositionScore != 0:
 		weights = 100 * (playerPositionScore - enemyPositionScore) / (playerPositionScore + enemyPositionScore)
 	else:
 		weights = 0
+	
+	var mobility
+	if globals.aiFlags[2] and playerMobility + enemyMobility != 0:
+		mobility = 100 * (playerMobility - enemyMobility) / (enemyMobility + playerMobility)
+	else:
+		mobility = 0
 	
 	return (0.1 * parity) + weights + (10 * mobility)
