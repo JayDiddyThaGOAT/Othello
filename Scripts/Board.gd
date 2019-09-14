@@ -432,7 +432,7 @@ func place_best_move(legalMoves):
 		for stone in flank:
 			stone.sideUp = enemy_of(currentPlayer)
 		
-		if value > bestValue:
+		if value > bestValue and randf() < 0.5:
 			bestMove = move
 			bestValue = value
 	
