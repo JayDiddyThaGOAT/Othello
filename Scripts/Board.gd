@@ -28,6 +28,7 @@ func _ready():
 	randomize()
 	for row in range(SIZE):
 		gameBoard.append([])
+# warning-ignore:unused_variable
 		for col in range(SIZE):
 			gameBoard[row].append(null)
 	
@@ -65,23 +66,28 @@ func restart_game():
 	else:
 		globals.currentRound += 1
 	
+# warning-ignore:return_value_discarded
 	get_tree().reload_current_scene()
 
 func go_back_to_main_menu():
 	globals.aiLosses = 0
 	globals.currentRound = 0
 	set_ai_difficulty()
+# warning-ignore:return_value_discarded
 	get_tree().change_scene_to(globals.mainMenu)
 	
 func up_next(nextPlayer : String, board : Array):
 	var nextEnemyLegalMoves = get_legal_moves_from(enemy_of(nextPlayer), board)
 	if nextEnemyLegalMoves.size() > 0:
+		currentLegalMoves = nextEnemyLegalMoves
 		return enemy_of(nextPlayer)
 	else:
 		var nextPlayerLegalMoves = get_legal_moves_from(nextPlayer, board)
 		if nextPlayerLegalMoves.size() > 0:
+			currentLegalMoves = nextPlayerLegalMoves
 			return nextPlayer
 		else:
+			currentLegalMoves = []
 			return null
 
 func update_hud(player : String):
@@ -89,6 +95,7 @@ func update_hud(player : String):
 	
 	var darkStones : int = 0
 	var lightStones : int = 0
+# warning-ignore:unused_variable
 	var emptySpaces : int = 0
 	
 	for row in range(SIZE):
@@ -145,11 +152,11 @@ func update_hud(player : String):
 				darkTurnSummary.text = "TIE\n"
 				lightTurnSummary.text = "TIE\n"
 		
+		emit_signal("up_to_date")
 		return
 	
 	repeatedTurn = currentPlayer == nextPlayer and not darkStones == 2 and not lightStones == 2
 	currentPlayer = nextPlayer
-	currentLegalMoves = get_legal_moves_from(currentPlayer, gameBoard)
 	match currentPlayer:
 		"Dark":
 			lightInstruction.text = ""
@@ -466,19 +473,19 @@ func evaluate(board : Array):
 					enemyStones += 1
 					enemyPositionScore += globals.values[row][col]
 	
-	var parity
+	var parity : float
 	if globals.aiFlags[0]:
-		parity = 100 * (playerStones - enemyStones) / (playerStones + enemyStones)
+		parity = float(100 * (playerStones - enemyStones)) / float((playerStones + enemyStones))
 	else:
 		parity = 0
 	
-	var weights
+	var weights : float
 	if globals.aiFlags[1] and playerPositionScore + enemyPositionScore != 0:
 		weights = 100 * (playerPositionScore - enemyPositionScore) / (playerPositionScore + enemyPositionScore)
 	else:
 		weights = 0
 	
-	var mobility
+	var mobility : float
 	if globals.aiFlags[2] and playerMobility + enemyMobility != 0:
 		mobility = 100 * (playerMobility - enemyMobility) / (enemyMobility + playerMobility)
 	else:

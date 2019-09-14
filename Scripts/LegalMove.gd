@@ -23,6 +23,10 @@ func _ready():
 	material.albedo_color = Color(0, 0, 0, material.albedo_color.a + (flipStones.size() - 1) * 0.125)
 	model.set_surface_material(0, material)
 
+# warning-ignore:unused_argument
+# warning-ignore:unused_argument
+# warning-ignore:unused_argument
+# warning-ignore:unused_argument
 func run_player_move(camera, event, click_position, click_normal, shape_idx):
 	if event is InputEventMouseButton:
 		if board.currentPlayer == "Dark" and not globals.darkAI or board.currentPlayer == "Light" and not globals.lightAI:
@@ -48,6 +52,7 @@ func run_ai_move():
 	for stone in flipStones:
 		stone.flip()
 
+# warning-ignore:unused_argument
 func _process(delta):
 	if not visible:
 		if flipStones.size() > 0:
@@ -57,7 +62,6 @@ func _process(delta):
 			
 			board.update_hud(board.enemy_of(board.currentPlayer))
 			flipStones.clear()
-			yield(board, "up_to_date")
 		else:
 			board.begin_turn()
 			queue_free()

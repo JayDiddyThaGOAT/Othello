@@ -32,6 +32,7 @@ func _ready():
 		globals.aiFlags[i] = false
 
 func play_game():
+# warning-ignore:return_value_discarded
 	get_tree().change_scene_to(globals.gamePlay)
 
 func toggle_dark_player():
@@ -51,7 +52,6 @@ func toggle_dark_player():
 func toggle_light_player():
 	globals.lightAI = not globals.lightAI
 	
-	var previousPlayer = lightController.text
 	if lightController.text == "PLAYER":
 		lightController.text = "CPU"
 		lightInstructions.text = "TAP FOR PLAYER"
