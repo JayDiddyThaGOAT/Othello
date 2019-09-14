@@ -418,7 +418,7 @@ func set_ai_difficulty():
 			globals.aiFlags[2] = true
 
 func place_best_move(legalMoves):
-	var bestMove : Area
+	var bestMove = null
 	var bestValue : float = -INF
 	for move in legalMoves:
 		add_stone_on_board(move.row, move.col, currentPlayer, gameBoard)
@@ -432,7 +432,7 @@ func place_best_move(legalMoves):
 		for stone in flank:
 			stone.sideUp = enemy_of(currentPlayer)
 		
-		if value > bestValue and randf() < 0.5:
+		if bestMove == null or bestMove != null and value > bestValue and randf() < 0.5:
 			bestMove = move
 			bestValue = value
 	
