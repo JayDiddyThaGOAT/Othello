@@ -62,6 +62,7 @@ func _ready():
 func restart_game():
 	if !("WINNER" in darkTurnSummary.text or "LOSER" in darkTurnSummary and "WINNER" in lightTurnSummary.text or "LOSER" in darkTurnSummary.text or "TIE" in darkTurnSummary and "TIE" in lightTurnSummary):
 		globals.aiLosses = 0
+		globals.aiWon = false
 		set_ai_difficulty()
 	else:
 		globals.currentRound += 1
@@ -71,6 +72,7 @@ func restart_game():
 
 func go_back_to_main_menu():
 	globals.aiLosses = 0
+	globals.aiWon = false
 	globals.currentRound = 0
 	set_ai_difficulty()
 # warning-ignore:return_value_discarded
@@ -125,6 +127,9 @@ func update_hud(player : String):
 			"Dark":
 				if not globals.darkAI and globals.lightAI:
 					globals.aiLosses += 1
+					globals.aiWon = false
+				elif globals.darkAI and not globals.lightAI:
+					globals.aiWon = true
 				
 				darkScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				lightScore.get_node("Score/Space").texture = globals.normSpaceTexture
@@ -134,6 +139,10 @@ func update_hud(player : String):
 			"Light":
 				if not globals.lightAI and globals.darkAI:
 					globals.aiLosses += 1
+					globals.aiWon = false
+				elif globals.lightAI and not globals.darkAI:
+					globals.aiWon = true
+					
 				
 				lightScore.get_node("Score/Space").texture = globals.darkSpaceTexture
 				darkScore.get_node("Score/Space").texture = globals.normSpaceTexture
@@ -392,15 +401,23 @@ func place_legal_moves(legalMoves):
 func set_ai_difficulty():
 	if globals.aiLosses == 0:
 		if not globals.aiFlags[0]:
+			globals.aiLevel += 1
+			if globals.lightAI:
+				lightInstruction.text = "LEVEL " + str(globals.aiLevel)
+			elif globals.darkAI:
+				darkInstruction.text = "LEVEL " + str(globals.aiLevel)
+			
 			globals.aiFlags[0] = true
 			globals.aiFlags[1] = false
 			globals.aiFlags[2] = false
+		
 	elif globals.aiLosses == 2:
 		if not globals.aiFlags[1]:
+			globals.aiLevel += 1
 			if globals.lightAI:
-				lightInstruction.text = "+1 AWARENESS"
+				lightInstruction.text = "LEVEL " + str(globals.aiLevel)
 			elif globals.darkAI:
-				darkInstruction.text = "+1 AWARENESS"
+				darkInstruction.text = "LEVEL " + str(globals.aiLevel)
 		
 			globals.aiFlags[0] = true
 			globals.aiFlags[1] = true
@@ -408,14 +425,31 @@ func set_ai_difficulty():
 		
 	elif globals.aiLosses == 4:
 		if not globals.aiFlags[2]:
+			globals.aiLevel += 1
 			if globals.lightAI:
-				lightInstruction.text = "+1 DEFENSE"
+				lightInstruction.text = "LEVEL " + str(globals.aiLevel)
 			elif globals.darkAI:
-				darkInstruction.text = "+1 DEFENSE"
+				darkInstruction.text = "LEVEL " + str(globals.aiLevel)
 			
 			globals.aiFlags[0] = true
 			globals.aiFlags[1] = true
 			globals.aiFlags[2] = true
+	
+	elif globals.aiLosses >= 5 and globals.aiLosses <= 8:
+		if globals.aiWon:
+			return
+		
+		globals.aiLevel += 1
+		if globals.lightAI:
+			lightInstruction.text = "LEVEL " + str(globals.aiLevel)
+		elif globals.darkAI:
+			darkInstruction.text = "LEVEL " + str(globals.aiLevel)
+		
+		globals.aiMaxDepth += 1
+		
+		globals.aiFlags[0] = true
+		globals.aiFlags[1] = true
+		globals.aiFlags[2] = true
 
 func place_best_move(legalMoves):
 	var bestMove = null
@@ -426,7 +460,11 @@ func place_best_move(legalMoves):
 		for stone in flank:
 			stone.sideUp = currentPlayer
 		
-		var value = evaluate(gameBoard)
+		var value : float
+		if globals.aiFlags[0] and globals.aiFlags[1] and globals.aiFlags[2]:
+			value = max_turn(gameBoard)
+		else:
+			value = evaluate(gameBoard)
 		
 		gameBoard[move.row][move.col] = null
 		for stone in flank:
@@ -443,6 +481,12 @@ func place_best_move(legalMoves):
 		return null
 
 func evaluate(board : Array):
+	
+	if get_legal_moves_from(enemy_of(currentPlayer), board).size() == 0:
+		return INF
+	elif get_legal_moves_from(currentPlayer, board).size() == 0:
+		return -INF
+	
 	var playerStones : int = 0
 	var enemyStones : int = 0
 	
@@ -492,3 +536,52 @@ func evaluate(board : Array):
 		mobility = 0
 	
 	return (0.1 * parity) + weights + (10 * mobility)
+
+func max_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
+	var legalMoves = get_legal_moves_from(currentPlayer, board)
+	if depth == globals.aiMaxDepth or legalMoves.size() <= 0:
+		return evaluate(board)
+			
+	
+	var value = -INF
+	for move in legalMoves:
+		add_stone_on_board(move.row, move.col, currentPlayer, board)
+		var flank = get_flipped_stones(move.row, move.col, currentPlayer, board)
+		for stone in flank:
+			stone.sideUp = currentPlayer
+		
+		value = max(value, min_turn(board, depth + 1, alpha, beta))
+		alpha = max(alpha, value)
+		
+		board[move.row][move.col] = null
+		for stone in flank:
+			stone.sideUp = enemy_of(currentPlayer)
+		
+		if alpha >= beta:
+			break
+	
+	return value
+
+func min_turn(board : Array, depth : int = 0, alpha : float = -INF, beta : float = INF):
+	var legalMoves = get_legal_moves_from(enemy_of(currentPlayer), board)
+	if depth == globals.aiMaxDepth or legalMoves.size() <= 0:
+		return evaluate(board)
+	
+	var value = INF
+	for move in legalMoves:
+		add_stone_on_board(move.row, move.col, enemy_of(currentPlayer), board)
+		var flank = get_flipped_stones(move.row, move.col, enemy_of(currentPlayer), board)
+		for stone in flank:
+			stone.sideUp = enemy_of(currentPlayer)
+		
+		value = min(value, max_turn(board, depth + 1, alpha, beta))
+		beta = min(beta, value)
+		
+		board[move.row][move.col] = null
+		for stone in flank:
+			stone.sideUp = currentPlayer
+		
+		if alpha >= beta:
+			break
+	
+	return value

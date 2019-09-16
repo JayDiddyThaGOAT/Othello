@@ -7,10 +7,21 @@ var currentRound : int = 1
 var darkAI : bool = false
 # warning-ignore:unused_class_variable
 var lightAI : bool = true
+
+# warning-ignore:unused_class_variable
+var aiLevel : int = 0
+
 # warning-ignore:unused_class_variable
 var aiLosses : int = 0
 # warning-ignore:unused_class_variable
 onready var aiFlags = [true, false, false]
+
+# warning-ignore:unused_class_variable
+var aiWon : bool = false
+
+# warning-ignore:unused_class_variable
+onready var aiMaxDepth = -1
+
 # warning-ignore:unused_class_variable
 onready var values =  [[ 120, -20,  20,  5,  5, -20,  20, 120],
 					   [ -20, -40,  -5, -5, -5,  -5, -40, -20],

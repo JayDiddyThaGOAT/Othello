@@ -81,6 +81,7 @@ surfaces/1 = {
 [node name="GamePlay" type="Spatial"]
 
 [node name="Board" type="MeshInstance" parent="."]
+editor/display_folded = true
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, 0 )
 mesh = SubResource( 1 )
 material/0 = null
@@ -124,6 +125,7 @@ align = 1
 valign = 1
 
 [node name="Players" type="HBoxContainer" parent="."]
+editor/display_folded = true
 margin_top = 450.0
 margin_right = 1440.0
 margin_bottom = 1199.0
@@ -135,6 +137,7 @@ transform = Transform( 1, 0, 0, 0, -0.422618, 0.906308, 0, -0.906308, -0.422618,
 light_energy = 2.0
 
 [node name="Dark" type="VSplitContainer" parent="Players"]
+editor/display_folded = true
 margin_left = 70.0
 margin_right = 570.0
 margin_bottom = 749.0

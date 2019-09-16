@@ -1,15 +1,16 @@
-[gd_scene load_steps=16 format=2]
+[gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://Models/Board/boardGreen.material" type="Material" id=1]
 [ext_resource path="res://Models/Board/boardOutsideLines.material" type="Material" id=2]
 [ext_resource path="res://Models/Board/boardInsideLines.material" type="Material" id=3]
 [ext_resource path="res://Scenes/Stone.tscn" type="PackedScene" id=4]
 [ext_resource path="res://Fonts/Fredericka_the_Great/FrederickatheGreat-Regular.ttf" type="DynamicFontData" id=5]
-[ext_resource path="res://Fonts/Controller.tres" type="DynamicFont" id=6]
-[ext_resource path="res://Sprites/Space.png" type="Texture" id=7]
-[ext_resource path="res://Models/Stone/stoneLight.material" type="Material" id=8]
-[ext_resource path="res://Models/Stone/stoneDark.material" type="Material" id=9]
-[ext_resource path="res://Fonts/SceneChangingButton.tres" type="DynamicFont" id=10]
+[ext_resource path="res://Scripts/PlayerSelection.gd" type="Script" id=6]
+[ext_resource path="res://Fonts/Controller.tres" type="DynamicFont" id=7]
+[ext_resource path="res://Sprites/Space.png" type="Texture" id=8]
+[ext_resource path="res://Models/Stone/stoneLight.material" type="Material" id=9]
+[ext_resource path="res://Models/Stone/stoneDark.material" type="Material" id=10]
+[ext_resource path="res://Fonts/SceneChangingButton.tres" type="DynamicFont" id=11]
 
 [sub_resource type="ArrayMesh" id=1]
 resource_name = "Board"
@@ -73,7 +74,7 @@ surfaces/0 = {
 "blend_shape_data": [  ],
 "format": 97559,
 "index_count": 1242,
-"material": ExtResource( 8 ),
+"material": ExtResource( 9 ),
 "primitive": 4,
 "skeleton_aabb": [  ],
 "vertex_count": 800
@@ -85,7 +86,7 @@ surfaces/1 = {
 "blend_shape_data": [  ],
 "format": 97559,
 "index_count": 1242,
-"material": ExtResource( 9 ),
+"material": ExtResource( 10 ),
 "primitive": 4,
 "skeleton_aabb": [  ],
 "vertex_count": 800
@@ -146,7 +147,6 @@ align = 1
 valign = 1
 
 [node name="Dark Instruction" type="Label" parent="."]
-visible = false
 margin_left = 67.0
 margin_top = 400.0
 margin_right = 571.0
@@ -157,7 +157,6 @@ align = 1
 valign = 1
 
 [node name="Light Instruction" type="Label" parent="."]
-visible = false
 margin_left = 867.0
 margin_top = 400.0
 margin_right = 1371.0
@@ -169,12 +168,12 @@ valign = 1
 
 [node name="Players" type="HBoxContainer" parent="."]
 editor/display_folded = true
-visible = false
 margin_top = 500.0
 margin_right = 1440.0
 margin_bottom = 1300.0
 custom_constants/separation = 300
 alignment = 1
+script = ExtResource( 6 )
 
 [node name="Dark" type="VSplitContainer" parent="Players"]
 margin_left = 70.0
@@ -184,7 +183,7 @@ margin_bottom = 800.0
 [node name="Controller" type="Button" parent="Players/Dark"]
 margin_right = 500.0
 margin_bottom = 129.0
-custom_fonts/font = ExtResource( 6 )
+custom_fonts/font = ExtResource( 7 )
 custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_colors/font_color_hover = Color( 0, 0, 0, 1 )
@@ -200,7 +199,7 @@ margin_bottom = 800.0
 margin_top = 79.0
 margin_right = 500.0
 margin_bottom = 579.0
-texture = ExtResource( 7 )
+texture = ExtResource( 8 )
 
 [node name="DiscContainer" type="ViewportContainer" parent="Players/Dark/Display"]
 editor/display_folded = true
@@ -214,7 +213,7 @@ editor/display_folded = true
 size = Vector2( 440, 440 )
 transparent_bg = true
 handle_input_locally = false
-render_target_update_mode = 0
+render_target_update_mode = 3
 gui_disable_input = true
 
 [node name="Camera" type="Camera" parent="Players/Dark/Display/DiscContainer/DiscViewer"]
@@ -238,7 +237,7 @@ margin_bottom = 800.0
 margin_right = 500.0
 margin_bottom = 129.0
 size_flags_vertical = 0
-custom_fonts/font = ExtResource( 6 )
+custom_fonts/font = ExtResource( 7 )
 custom_colors/font_color_disabled = Color( 1, 1, 1, 1 )
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_color_hover = Color( 1, 1, 1, 1 )
@@ -255,7 +254,7 @@ margin_bottom = 800.0
 margin_top = 79.0
 margin_right = 500.0
 margin_bottom = 579.0
-texture = ExtResource( 7 )
+texture = ExtResource( 8 )
 
 [node name="DiscContainer" type="ViewportContainer" parent="Players/Light/Display"]
 editor/display_folded = true
@@ -268,7 +267,7 @@ margin_bottom = 549.0
 size = Vector2( 440, 440 )
 transparent_bg = true
 handle_input_locally = false
-render_target_update_mode = 0
+render_target_update_mode = 3
 gui_disable_input = true
 
 [node name="Camera" type="Camera" parent="Players/Light/Display/DiscContainer/DiscViewer"]
@@ -282,7 +281,6 @@ transform = Transform( 1, 0, 0, 0, -1, -8.74228e-008, 0, 8.74228e-008, -1, 10, 0
 mesh = SubResource( 5 )
 
 [node name="Play Button" type="Button" parent="."]
-visible = false
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -291,7 +289,7 @@ margin_bottom = -90.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 size_flags_stretch_ratio = 0.0
-custom_fonts/font = ExtResource( 10 )
+custom_fonts/font = ExtResource( 11 )
 custom_colors/font_color_disabled = Color( 1, 1, 0, 1 )
 custom_colors/font_color = Color( 1, 1, 0, 1 )
 custom_colors/font_color_hover = Color( 1, 1, 0, 1 )
